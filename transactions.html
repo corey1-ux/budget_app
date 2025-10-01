@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transactions - Budget App</title>
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/navbar.css">
+    <link rel="stylesheet" href="css/transactions.css">
+    <link rel="stylesheet" href="css/budget.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-brand">
+            <span class="logo">💰</span>
+            <h1>Budget Tracker</h1>
+        </div>
+        
+        <button class="hamburger" id="hamburger" aria-label="Menu">
+            <span class="bar"></span>
+            <span class="bar"></span>
+            <span class="bar"></span>
+        </button>
+        
+        <div class="nav-menu" id="navMenu">
+            <a href="dashboard.html" class="nav-link">Dashboard</a>
+            <a href="transactions.html" class="nav-link">Transactions</a>
+            <a href="budget.html" class="nav-link">Budget</a>
+            <a href="reports.html" class="nav-link">Reports</a>
+            <a href="settings.html" class="nav-link">Settings</a>
+        </div>
+    </nav>
+    
+    <main class="container">
+        <!-- Month Navigation -->
+        <div class="month-nav">
+            <button class="btn-month-nav" id="prevMonth">‹</button>
+            <div class="month-display">
+                <h2 id="currentMonthDisplay">September 2025</h2>
+                <button class="btn-current-month" id="goToCurrentMonth">Go to Current Month</button>
+            </div>
+            <button class="btn-month-nav" id="nextMonth">›</button>
+        </div>
+
+        <!-- Add Transaction Form -->
+        <div class="transaction-form-card">
+            <h3>Add Transaction</h3>
+            <form id="transactionForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="merchant">Merchant/Source</label>
+                        <input type="text" id="merchant" placeholder="e.g., Walmart, Salary" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="amount">Amount</label>
+                        <div class="input-with-prefix">
+                            <span class="prefix">$</span>
+                            <input type="number" id="amount" placeholder="0.00" step="0.01" required>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="account">Account</label>
+                        <select id="account" required>
+                            <option value="">Select account</option>
+                            <option value="checking">Checking</option>
+                            <option value="savings">Savings</option>
+                            <option value="credit-card">Credit Card</option>
+                            <option value="cash">Cash</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="day">Day of Month</label>
+                        <input type="number" id="day" min="1" max="31" placeholder="1-31" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="tag">Tag/Category</label>
+                        <select id="tag" required>
+                            <option value="">Select category</option>
+                            <option value="income">Income</option>
+                            <option value="groceries">Groceries</option>
+                            <option value="dining">Dining Out</option>
+                            <option value="transportation">Transportation</option>
+                            <option value="utilities">Utilities</option>
+                            <option value="entertainment">Entertainment</option>
+                            <option value="healthcare">Healthcare</option>
+                            <option value="shopping">Shopping</option>
+                            <option value="housing">Housing</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="person">Person (Optional)</label>
+                        <input type="text" id="person" placeholder="e.g., John, Sarah" list="personList">
+                        <datalist id="personList"></datalist>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group checkbox-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="recurring">
+                            <span>Recurring Transaction</span>
+                        </label>
+                    </div>
+                    
+                    <div class="form-group checkbox-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="splitTransaction">
+                            <span>Split Transaction</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Split Transaction Section (Hidden by default) -->
+                <div id="splitSection" class="split-section" style="display: none;">
+                    <div class="split-header">
+                        <h4>Split Details</h4>
+                        <p class="split-info">Original Amount: $<span id="splitOriginalAmount">0.00</span></p>
+                    </div>
+                    <div id="splitsList"></div>
+                    <button type="button" class="btn-add-split" id="addSplitBtn">+ Add Split</button>
+                    <p class="split-validation" id="splitValidation"></p>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn-primary">Add Transaction</button>
+                    <button type="button" class="btn-secondary" id="addMultipleBtn" style="display: none;">
+                        + Add Another
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Transactions List -->
+        <div class="transactions-list-card">
+            <div class="list-header">
+                <h3>Transactions</h3>
+                <div class="summary">
+                    <span class="summary-item income">Income: <strong id="totalIncome">$0.00</strong></span>
+                    <span class="summary-item expense">Expenses: <strong id="totalExpenses">$0.00</strong></span>
+                    <span class="summary-item net">Net: <strong id="netAmount">$0.00</strong></span>
+                </div>
+            </div>
+            
+            <!-- Filter Section -->
+            <div class="filter-section">
+                <div class="filter-controls">
+                    <input type="text" id="searchFilter" placeholder="Search merchant..." class="filter-input">
+                    
+                    <select id="tagFilter" class="filter-select">
+                        <option value="">All Categories</option>
+                        <option value="income">Income</option>
+                        <option value="groceries">Groceries</option>
+                        <option value="dining">Dining Out</option>
+                        <option value="transportation">Transportation</option>
+                        <option value="utilities">Utilities</option>
+                        <option value="entertainment">Entertainment</option>
+                        <option value="healthcare">Healthcare</option>
+                        <option value="shopping">Shopping</option>
+                        <option value="housing">Housing</option>
+                        <option value="other">Other</option>
+                    </select>
+                    
+                    <select id="accountFilter" class="filter-select">
+                        <option value="">All Accounts</option>
+                        <option value="checking">Checking</option>
+                        <option value="savings">Savings</option>
+                        <option value="credit-card">Credit Card</option>
+                        <option value="cash">Cash</option>
+                    </select>
+                    
+                    <select id="personFilter" class="filter-select">
+                        <option value="">All People</option>
+                    </select>
+                    
+                    <button class="btn-clear-filters" id="clearFiltersBtn">Clear Filters</button>
+                </div>
+                <div class="filter-results">
+                    <span id="filterResultsText">Showing all transactions</span>
+                </div>
+            </div>
+            
+            <div id="transactionsList" class="transactions-container">
+                <p class="empty-state">No transactions yet. Add your first transaction above!</p>
+            </div>
+        </div>
+    </main>
+</body>
+<script src="js/transactions.js"></script>
+<script src="js/monthNavigation.js"></script>
+<script src="js/navbar.js"></script>
+</html>
