@@ -7,6 +7,9 @@ async function loadNavbar() {
         // Insert navbar at the top of body
         document.body.insertAdjacentHTML('afterbegin', html);
         
+        // Update UI based on auth state
+        await updateNavUI();
+
         // Now initialize navbar functionality
         initNavbar();
         
@@ -14,6 +17,46 @@ async function loadNavbar() {
         console.error('Error loading navbar:', error);
     }
 }
+
+// Update Nav based on Login State
+async function updateNavUI() {
+    const userProfile = document.getElementById('userProfile');
+    const userGreeting = document.getElementById('userGreeting');
+    const userAvatar = document.getElementById('userAvatar');
+    const signInBtn = document.getElementById('signInBtn');
+    const mainNavLinks = document.querySelectorAll('.main-nav');
+
+    try {
+        const { data: { session } } = await supabase.auth.getSession();
+
+        if (session) {
+            // User is logged IN
+            const user = session.user;
+            const fullName = user.user_metadata?.full_name || user.email.split('@')[0];
+            const avatarUrl = user.user_metadata?.avatar_url;
+
+            userGreeting.textContent = `Hello, ${fullName}`;
+            if (avatarUrl) {
+                userAvatar.src = avatarUrl;
+            }
+            
+            userProfile.style.display = 'flex';
+            signInBtn.style.display = 'none';
+            mainNavLinks.forEach(link => link.style.display = 'block');
+
+        } else {
+            // User is logged OUT
+            userProfile.style.display = 'none';
+            signInBtn.style.display = 'block';
+            mainNavLinks.forEach(link => link.style.display = 'none'); // Hide links if not logged in
+        }
+    } catch (error) {
+        console.error('Error updating nav UI:', error);
+        userProfile.style.display = 'none';
+        signInBtn.style.display = 'block';
+    }
+}
+
 
 // Initialize navbar functionality
 function initNavbar() {

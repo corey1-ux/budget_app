@@ -36,6 +36,45 @@ body {
     font-weight: 600;
 }
 
+.nav-right {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-left: auto; /* Pushes it to the right */
+    padding-right: 1rem;
+}
+
+.user-profile {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: #ecf0f1;
+}
+
+.avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #ecf0f1;
+    cursor: pointer;
+}
+
+.btn-signin {
+    background-color: #3498db;
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: 500;
+    transition: background-color 0.2s ease;
+}
+
+.btn-signin:hover {
+    background-color: #2980b9;
+}
+
+
 .hamburger {
     display: flex;
     flex-direction: column;
@@ -189,5 +228,9 @@ body {
     
     .submenu {
         width: 100%;
+    }
+
+    .nav-right {
+        display: none;
     }
 }
