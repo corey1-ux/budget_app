@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Transactions - Budget App</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="css/main.css">
     <link rel="stylesheet" href="css/navbar.css">
     <link rel="stylesheet" href="css/transactions.css">
@@ -28,6 +29,8 @@
             <a href="budget.html" class="nav-link">Budget</a>
             <a href="reports.html" class="nav-link">Reports</a>
             <a href="settings.html" class="nav-link">Settings</a>
+             <a href="#" class="nav-link" id="logoutBtn">Logout</a>
+</div>
         </div>
     </nav>
     
@@ -195,6 +198,7 @@
         </div>
     </main>
 </body>
+    <script src="js/supabaseClient.js"></script>
 <script src="js/transactions.js"></script>
 <script src="js/monthNavigation.js"></script>
 <script src="js/navbar.js"></script>

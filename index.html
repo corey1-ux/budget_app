@@ -4,57 +4,83 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Budget App</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="css/login.css">
 </head>
 <body>
-   
-
+    <nav class="navbar">
+        <div class="nav-brand">
+            <span class="logo">💰</span>
+            <h1>Manalo/Sigler</h1>
+        </div>
+    </nav>
+    <div class ="background">
     <main class="container">
-        <div class="login-card">
-            <div class="login-header">
-                <h2>Welcome Back</h2>
-                <p>Please login to access your budget tracker</p>
+        <div class="login-wrap">
+            <div class="login-html">
+                <input id="tab-1" type="radio" name="tab" class="sign-in" checked>
+                <label for="tab-1" class="tab">Sign In</label>
+                <input id="tab-2" type="radio" name="tab" class="sign-up">
+                <label for="tab-2" class="tab">Sign Up</label>
+                <div class="login-form">
+                    <!-- Sign In Form -->
+                    <div class="sign-in-htm">
+                        <form id="signInForm">
+                            <div class="group">
+                                <label for="signin-user" class="label">email</label>
+                                <input id="signin-user" type="email" class="input" required>
+                            </div>
+                            <div class="group">
+                                <label for="signin-pass" class="label">Password</label>
+                                <input id="signin-pass" type="password" class="input" data-type="password" required>
+                            </div>
+                            <div class="group">
+                                <input id="check" type="checkbox" class="check" checked>
+                                <label for="check"><span class="icon"></span> Keep me Signed in</label>
+                            </div>
+                            <div class="group">
+                                <input type="submit" class="button" value="Sign In">
+                            </div>
+                            <div class="hr"></div>
+                            <div class="foot-lnk">
+                                <a href="#forgot">Forgot Password?</a>
+                        </form>
+                        </div>
+                    </div>
+                    
+                    <!-- Sign Up Form -->
+                    <div class="sign-up-htm">
+                        <form id="signUpForm">
+                            <div class="group">
+                                <label for="signup-user" class="label">Email</label>
+                                <input id="signup-user" type="email" class="input" required>
+                            </div>
+                            <div class="group">
+                                <label for="signup-pass" class="label">Password</label>
+                                <input id="signup-pass" type="password" class="input" data-type="password" required>
+                            </div>
+                            <div class="group">
+                                <label for="signup-pass-repeat" class="label">Repeat Password</label>
+                                <input id="signup-pass-repeat" type="password" class="input" data-type="password" required>
+                            </div>
+                            <div class="group">
+                                <label for="signup-email" class="label">Email Address</label>
+                                <input id="signup-email" type="email" class="input" required>
+                            </div>
+                            <div class="group">
+                                <input type="submit" class="button" value="Sign Up">
+                            </div>
+                            <div class="hr"></div>
+                            <div class="foot-lnk">
+                                <label for="tab-1">Already Member?</label>
+                            </div>
+                        </form>
+                    </div>
+                </div>
             </div>
-            
-            <form class="login-form" id="loginForm">
-                <div class="form-group">
-                    <label for="username">Username</label>
-                    <input 
-                        type="text" 
-                        id="username" 
-                        name="username" 
-                        placeholder="Enter your username"
-                        required
-                    >
-                </div>
-                
-                <div class="form-group">
-                    <label for="password">Password</label>
-                    <input 
-                        type="password" 
-                        id="password" 
-                        name="password" 
-                        placeholder="Enter your password"
-                        required
-                    >
-                </div>
-                
-                <div class="form-options">
-                    <label class="remember-me">
-                        <input type="checkbox" id="rememberMe">
-                        <span>Remember me</span>
-                    </label>
-                    <a href="#" class="forgot-password">Forgot password?</a>
-                </div>
-                
-                <button type="submit" class="btn-login">Login</button>
-                
-                <div class="signup-link">
-                    Don't have an account? <a href="#">Sign up</a>
-                </div>
-            </form>
         </div>
     </main>
-<script src="js/login.js"></script>
+    <script src="js/supabaseClient.js"></script>
+    <script src="js/login.js"></script>
 </body>
 </html>

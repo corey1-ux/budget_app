@@ -24,4 +24,29 @@ document.addEventListener('click', function(event) {
         hamburger.classList.remove('active');
         navMenu.classList.remove('active');
     }
+const logoutBtn = document.getElementById('logoutBtn');
+if (logoutBtn) {
+    logoutBtn.addEventListener('click', async function(e) {
+        e.preventDefault();
+        
+        try {
+            const { error } = await supabase.auth.signOut();
+            
+            if (error) throw error;
+            
+            // Clear local storage
+            localStorage.removeItem('isLoggedIn');
+            localStorage.removeItem('userId');
+            localStorage.removeItem('userEmail');
+            localStorage.removeItem('username');
+            
+            // Redirect to login
+            window.location.href = 'index.html';
+            
+        } catch (error) {
+            alert('Logout failed: ' + error.message);
+            console.error('Logout error:', error);
+        }
+    });
+}
 });
