@@ -1,47 +1,36 @@
 const MonthNavigation = {
     currentMonth: null,
     
-    // Initialize month navigation
     init() {
         const savedMonth = this.getSavedMonth();
         const today = new Date();
-        
-        // Use saved month if exists, otherwise current month
         this.currentMonth = savedMonth || this.formatMonthKey(today);
         this.saveCurrentMonth();
-        
         return this.currentMonth;
     },
     
-    // Get the saved current month from storage
     getSavedMonth() {
-        const data = localStorage.getItem('currentMonth');
-        return data;
+        return localStorage.getItem('currentMonth');
     },
     
-    // Save current month to storage
     saveCurrentMonth() {
         localStorage.setItem('currentMonth', this.currentMonth);
     },
     
-    // Format date as YYYY-MM
     formatMonthKey(date) {
         const year = date.getFullYear();
         const month = String(date.getMonth() + 1).padStart(2, '0');
         return `${year}-${month}`;
     },
     
-    // Get current real month (today)
     getRealCurrentMonth() {
         return this.formatMonthKey(new Date());
     },
     
-    // Check if viewing current month
     isViewingCurrentMonth() {
         return this.currentMonth === this.getRealCurrentMonth();
     },
     
-    // Navigate to previous month
     previousMonth() {
         const [year, month] = this.currentMonth.split('-').map(Number);
         const date = new Date(year, month - 1, 1);
@@ -51,7 +40,6 @@ const MonthNavigation = {
         return this.currentMonth;
     },
     
-    // Navigate to next month
     nextMonth() {
         const [year, month] = this.currentMonth.split('-').map(Number);
         const date = new Date(year, month - 1, 1);
@@ -61,14 +49,12 @@ const MonthNavigation = {
         return this.currentMonth;
     },
     
-    // Go back to current real month
     goToCurrent() {
         this.currentMonth = this.getRealCurrentMonth();
         this.saveCurrentMonth();
         return this.currentMonth;
     },
     
-    // Get display name for month
     getDisplayName(monthKey) {
         const [year, month] = monthKey.split('-').map(Number);
         const date = new Date(year, month - 1, 1);
@@ -76,3 +62,76 @@ const MonthNavigation = {
         return `${monthName} ${year}`;
     }
 };
+
+// Load and initialize month navigation UI component
+async function loadMonthNavComponent() {
+    try {
+        const response = await fetch('components/monthNav.html');
+        const html = await response.text();
+        
+        // Insert at top of container
+        const container = document.querySelector('.container');
+        if (container) {
+            container.insertAdjacentHTML('afterbegin', html);
+            initMonthNavUI();
+        }
+        
+    } catch (error) {
+        console.error('Error loading month nav component:', error);
+    }
+}
+
+// Initialize month navigation UI
+function initMonthNavUI() {
+    const prevMonthBtn = document.getElementById('prevMonth');
+    const nextMonthBtn = document.getElementById('nextMonth');
+    const goToCurrentMonthBtn = document.getElementById('goToCurrentMonth');
+    const monthDisplayEl = document.getElementById('currentMonthDisplay');
+    
+    if (!prevMonthBtn || !nextMonthBtn || !monthDisplayEl) {
+        console.error('Month nav elements not found');
+        return;
+    }
+    
+    // Update month display
+    function updateMonthDisplay() {
+        monthDisplayEl.textContent = MonthNavigation.getDisplayName(MonthNavigation.currentMonth);
+        
+        if (goToCurrentMonthBtn) {
+            if (MonthNavigation.isViewingCurrentMonth()) {
+                goToCurrentMonthBtn.classList.add('hidden');
+            } else {
+                goToCurrentMonthBtn.classList.remove('hidden');
+            }
+        }
+    }
+    
+    // Event listeners
+    prevMonthBtn.addEventListener('click', () => {
+        MonthNavigation.previousMonth();
+        updateMonthDisplay();
+        // Trigger custom event that pages can listen to
+        window.dispatchEvent(new CustomEvent('monthChanged'));
+    });
+    
+    nextMonthBtn.addEventListener('click', () => {
+        MonthNavigation.nextMonth();
+        updateMonthDisplay();
+        window.dispatchEvent(new CustomEvent('monthChanged'));
+    });
+    
+    if (goToCurrentMonthBtn) {
+        goToCurrentMonthBtn.addEventListener('click', () => {
+            MonthNavigation.goToCurrent();
+            updateMonthDisplay();
+            window.dispatchEvent(new CustomEvent('monthChanged'));
+        });
+    }
+    
+    // Initialize display
+    MonthNavigation.init();
+    updateMonthDisplay();
+}
+
+// Auto-load component if this script is included
+loadMonthNavComponent();
