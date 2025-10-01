@@ -29,7 +29,7 @@ function initNavbar() {
         const navLinks = document.querySelectorAll('.nav-link');
         navLinks.forEach(link => {
             link.addEventListener('click', function(e) {
-                // Don't close menu if clicking Settings (has submenu)
+                // Don't close menu for Settings (opens modal)
                 if (link.id === 'settingsLink') {
                     return;
                 }
@@ -50,26 +50,22 @@ function initNavbar() {
         });
     }
 
-    // Settings submenu toggle
+    // Settings link - opens modal
     const settingsLink = document.getElementById('settingsLink');
-    const settingsSubmenu = document.getElementById('settingsSubmenu');
-
-    if (settingsLink && settingsSubmenu) {
+    if (settingsLink) {
         settingsLink.addEventListener('click', function(e) {
             e.preventDefault();
             
-            const wrapper = settingsLink.closest('.nav-link-wrapper');
-            wrapper.classList.toggle('active');
-            settingsSubmenu.classList.toggle('active');
-        });
-        
-        // Close submenu when clicking a submenu link
-        const submenuLinks = document.querySelectorAll('.submenu-link');
-        submenuLinks.forEach(link => {
-            link.addEventListener('click', function() {
-                hamburger.classList.remove('active');
-                navMenu.classList.remove('active');
-            });
+            // Open settings modal
+            if (typeof window.openSettingsModal === 'function') {
+                window.openSettingsModal();
+                
+                // Close hamburger menu if open
+                if (hamburger) hamburger.classList.remove('active');
+                if (navMenu) navMenu.classList.remove('active');
+            } else {
+                console.error('Settings modal not loaded yet');
+            }
         });
     }
 
