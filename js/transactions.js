@@ -128,10 +128,38 @@ const accountFilter = document.getElementById('accountFilter');
 const personFilter = document.getElementById('personFilter');
 const clearFiltersBtn = document.getElementById('clearFiltersBtn');
 const filterResultsText = document.getElementById('filterResultsText');
+const accountSelect = document.getElementById('account');
+const accountFilterSelect = document.getElementById('accountFilter');
 
 let transactions = [];
 let splits = [];
 let filteredTransactions = [];
+
+// --- NEW FUNCTION TO POPULATE ACCOUNTS ---
+async function populateAccountsDropdowns() {
+    try {
+        const { data: accounts, error } = await supabase
+            .from('accounts')
+            .select('name')
+            .order('name', { ascending: true });
+        
+        if (error) throw error;
+
+        // Clear existing options, but keep the placeholder
+        accountSelect.innerHTML = '<option value="">Select account</option>';
+        accountFilterSelect.innerHTML = '<option value="">All Accounts</option>';
+
+        accounts.forEach(account => {
+            const option = `<option value="${account.name}">${account.name}</option>`;
+            accountSelect.innerHTML += option;
+            accountFilterSelect.innerHTML += option;
+        });
+
+    } catch (err) {
+        console.error("Error fetching accounts for dropdown:", err);
+    }
+}
+
 
 // Update person autocomplete
 function updatePersonList() {
@@ -476,7 +504,8 @@ goToCurrentMonthBtn.addEventListener('click', () => {
     addMultipleBtn.style.display = 'none';
 });
 
-// Initialize
+// --- UPDATED INITIALIZATION ---
 MonthNavigation.init();
 updateMonthDisplay();
 loadTransactions();
+populateAccountsDropdowns(); // Load accounts from Supabase

@@ -1,0 +1,137 @@
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.accounts-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.summary-card {
+    background-color: white;
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.summary-card h3 {
+    font-size: 1rem;
+    color: #7f8c8d;
+    margin-bottom: 0.5rem;
+}
+
+.summary-card p {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #2c3e50;
+}
+
+.summary-card.net-worth p {
+    color: #3498db;
+}
+
+.accounts-list {
+    display: grid;
+    gap: 1rem;
+}
+
+.account-card {
+    background-color: white;
+    padding: 1rem 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-left: 5px solid;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.account-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.12);
+}
+
+.account-card.asset {
+    border-left-color: #27ae60;
+}
+
+.account-card.debt {
+    border-left-color: #e74c3c;
+}
+
+.account-info h4 {
+    font-size: 1.2rem;
+    color: #2c3e50;
+    margin-bottom: 0.25rem;
+}
+
+.account-info p {
+    font-size: 0.9rem;
+    color: #7f8c8d;
+    text-transform: capitalize;
+}
+
+.account-balance {
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+/* Modal styles */
+.modal-overlay {
+    display: none; /* Hidden by default */
+}
+
+.modal-overlay.active {
+    display: flex; /* Shown with JS */
+}
+
+.modal-body-form {
+    padding: 2rem;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: #555;
+}
+
+.form-group input,
+.form-group select {
+    width: 100%;
+    padding: 0.75rem;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 1rem;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 2rem;
+}
+
+.btn-danger {
+    background-color: #e74c3c;
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+.btn-danger:hover {
+    background-color: #c0392b;
+}
