@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Budget App</title>
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/navbar.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="css/budget.css">
+</head>
+<body>
+
+<nav class="navbar">
+        <div class="nav-brand">
+            <span class="logo">💰</span>
+            <h1>Budget Tracker</h1>
+        </div>
+        
+        <button class="hamburger" id="hamburger" aria-label="Menu">
+            <span class="bar"></span>
+            <span class="bar"></span>
+            <span class="bar"></span>
+        </button>
+        
+        <div class="nav-menu" id="navMenu">
+            <a href="index.html" class="nav-link">Dashboard</a>
+            <a href="transactions.html" class="nav-link">Transactions</a>
+            <a href="budget.html" class="nav-link">Budget</a>
+            <a href="reports.html" class="nav-link">Reports</a>
+            <a href="settings.html" class="nav-link">Settings</a>
+        </div>
+    </nav>
+
+<div class="month-nav">
+            <button class="btn-month-nav" id="prevMonth">‹</button>
+            <div class="month-display">
+                <h2 id="currentMonthDisplay">September 2025</h2>
+                <button class="btn-current-month" id="goToCurrentMonth">Go to Current Month</button>
+            </div>
+            <button class="btn-month-nav" id="nextMonth">›</button>
+        </div>
+
+        <!-- Dashboard Cards -->
+        <div class="dashboard-grid">
+            <!-- Income Card -->
+            <div class="dashboard-card income-card">
+                <div class="card-icon">💵</div>
+                <div class="card-content">
+                    <h3>Total Income</h3>
+                    <p class="card-value" id="dashboardIncome">$0.00</p>
+                </div>
+            </div>
+
+            <!-- Expenses Card -->
+            <div class="dashboard-card expenses-card">
+                <div class="card-icon">💸</div>
+                <div class="card-content">
+                    <h3>Total Expenses</h3>
+                    <p class="card-value" id="dashboardExpenses">$0.00</p>
+                </div>
+            </div>
+
+            <!-- Remaining Card -->
+            <div class="dashboard-card remaining-card">
+                <div class="card-icon">💰</div>
+                <div class="card-content">
+                    <h3>Remaining</h3>
+                    <p class="card-value" id="dashboardRemaining">$0.00</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chart Section -->
+        <div class="chart-container">
+            <h3>Budget Overview</h3>
+            <div class="chart-wrapper">
+                <canvas id="budgetChart"></canvas>
+                <div class="chart-center-text">
+                    <div class="chart-percentage" id="chartPercentage">0%</div>
+                    <div class="chart-label">Spent</div>
+                </div>
+            </div>
+            <div class="chart-legend">
+                <div class="legend-item">
+                    <span class="legend-color" style="background-color: #3498db;"></span>
+                    <span>Remaining</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-color" style="background-color: #e74c3c;"></span>
+                    <span>Expenses</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="quick-actions">
+            <h3>Quick Actions</h3>
+            <div class="action-buttons">
+                <a href="budget.html" class="action-btn">
+                    <span class="action-icon">📝</span>
+                    <span>Edit Budget</span>
+                </a>
+                <a href="transactions.html" class="action-btn">
+                    <span class="action-icon">➕</span>
+                    <span>Add Transaction</span>
+                </a>
+                <a href="reports.html" class="action-btn">
+                    <span class="action-icon">📊</span>
+                    <span>View Reports</span>
+                </a>
+            </div>
+        </div>
+    </main>
+</body>
+
+<script src="js/monthNavigation.js"></script>
+    <script src="js/budgetData.js"></script>
+    <script src="js/navbar.js"></script>
+    <script src="js/dashboard.js"></script>
+</body>
+</html>
