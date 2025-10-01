@@ -1,5 +1,3 @@
-const hamburger = document.getElementById('hamburger');
-const navMenu = document.getElementById('navMenu');
 const incomeInput = document.getElementById('income');
 const expensesList = document.getElementById('expensesList');
 const addExpenseBtn = document.getElementById('addExpenseBtn');
@@ -10,30 +8,6 @@ const prevMonthBtn = document.getElementById('prevMonth');
 const nextMonthBtn = document.getElementById('nextMonth');
 const goToCurrentMonthBtn = document.getElementById('goToCurrentMonth');
 const monthDisplayEl = document.getElementById('currentMonthDisplay');
-
-// Hamburger menu functionality
-hamburger.addEventListener('click', function() {
-    hamburger.classList.toggle('active');
-    navMenu.classList.toggle('active');
-});
-
-const navLinks = document.querySelectorAll('.nav-link');
-navLinks.forEach(link => {
-    link.addEventListener('click', function() {
-        hamburger.classList.remove('active');
-        navMenu.classList.remove('active');
-    });
-});
-
-document.addEventListener('click', function(event) {
-    const isClickInsideNav = navMenu.contains(event.target);
-    const isClickOnHamburger = hamburger.contains(event.target);
-    
-    if (!isClickInsideNav && !isClickOnHamburger && navMenu.classList.contains('active')) {
-        hamburger.classList.remove('active');
-        navMenu.classList.remove('active');
-    }
-});
 
 // Expense item creation
 function createExpenseItem(name = '', amount = '') {
