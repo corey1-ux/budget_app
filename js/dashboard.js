@@ -1,5 +1,9 @@
-const hamburger = document.getElementById('hamburger');
-const navMenu = document.getElementById('navMenu');
+MonthNavigation.init();
+const testData = BudgetData.getMonthData(MonthNavigation.currentMonth);
+console.log('Data for current month:', testData);
+console.log('======================');
+
+// Dashboard element references
 const prevMonthBtn = document.getElementById('prevMonth');
 const nextMonthBtn = document.getElementById('nextMonth');
 const goToCurrentMonthBtn = document.getElementById('goToCurrentMonth');
@@ -8,32 +12,6 @@ const dashboardIncomeEl = document.getElementById('dashboardIncome');
 const dashboardExpensesEl = document.getElementById('dashboardExpenses');
 const dashboardRemainingEl = document.getElementById('dashboardRemaining');
 const chartPercentageEl = document.getElementById('chartPercentage');
-
-let budgetChart = null;
-
-// Hamburger menu
-hamburger.addEventListener('click', function() {
-    hamburger.classList.toggle('active');
-    navMenu.classList.toggle('active');
-});
-
-const navLinks = document.querySelectorAll('.nav-link');
-navLinks.forEach(link => {
-    link.addEventListener('click', function() {
-        hamburger.classList.remove('active');
-        navMenu.classList.remove('active');
-    });
-});
-
-document.addEventListener('click', function(event) {
-    const isClickInsideNav = navMenu.contains(event.target);
-    const isClickOnHamburger = hamburger.contains(event.target);
-    
-    if (!isClickInsideNav && !isClickOnHamburger && navMenu.classList.contains('active')) {
-        hamburger.classList.remove('active');
-        navMenu.classList.remove('active');
-    }
-});
 
 // Update month display
 function updateMonthDisplay() {
@@ -81,45 +59,49 @@ function loadDashboardData() {
     updateChart(income, totalExpenses);
 }
 
-// Create/Update chart
+let chartInstance = null; // Keep track of chart instance
+
 function updateChart(income, expenses) {
-    const canvas = document.getElementById('budgetChart');
-    const ctx = canvas.getContext('2d');
+    const ctx = document.getElementById('budgetChart').getContext('2d');
     
-    // Clear canvas
-    canvas.width = 300;
-    canvas.height = 300;
-    
-    const centerX = canvas.width / 2;
-    const centerY = canvas.height / 2;
-    const radius = 120;
-    
-    // Calculate angles
     const remaining = Math.max(0, income - expenses);
-    const total = income || 1;
-    const expenseAngle = (expenses / total) * 2 * Math.PI;
     
-    // Draw remaining (blue)
-    ctx.beginPath();
-    ctx.moveTo(centerX, centerY);
-    ctx.arc(centerX, centerY, radius, expenseAngle - Math.PI / 2, 2 * Math.PI - Math.PI / 2);
-    ctx.closePath();
-    ctx.fillStyle = '#3498db';
-    ctx.fill();
+    // Destroy existing chart if it exists
+    if (chartInstance) {
+        chartInstance.destroy();
+    }
     
-    // Draw expenses (red)
-    ctx.beginPath();
-    ctx.moveTo(centerX, centerY);
-    ctx.arc(centerX, centerY, radius, -Math.PI / 2, expenseAngle - Math.PI / 2);
-    ctx.closePath();
-    ctx.fillStyle = '#e74c3c';
-    ctx.fill();
-    
-    // Draw inner circle (donut effect)
-    ctx.beginPath();
-    ctx.arc(centerX, centerY, radius * 0.6, 0, 2 * Math.PI);
-    ctx.fillStyle = 'white';
-    ctx.fill();
+    // Create new chart
+    chartInstance = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Expenses', 'Remaining'],
+            datasets: [{
+                data: [expenses, remaining],
+                backgroundColor: ['#e74c3c', '#3498db'],
+                borderWidth: 0,
+                cutout: '60%'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: {
+                    display: false // We have our own legend
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const label = context.label || '';
+                            const value = context.parsed || 0;
+                            return label + ': $' + value.toFixed(2);
+                        }
+                    }
+                }
+            }
+        }
+    });
 }
 
 // Month navigation
@@ -141,7 +123,7 @@ goToCurrentMonthBtn.addEventListener('click', () => {
     loadDashboardData();
 });
 
-// Initialize
+// Initialize on page load
 MonthNavigation.init();
 updateMonthDisplay();
 loadDashboardData();
