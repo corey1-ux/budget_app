@@ -94,6 +94,9 @@ async function saveBudgetData() {
 
 // Load budget data for current month from Supabase
 async function loadBudgetData() {
+    // Ensure we don't try to load data if the month isn't ready
+    if (!MonthNavigation.currentMonth) return;
+    
     const data = await BudgetData.getMonthData(MonthNavigation.currentMonth);
     
     incomeInput.value = data.income || '';
@@ -127,12 +130,11 @@ incomeInput.addEventListener('input', () => {
     debouncedSave();
 });
 
-// Listen for the custom event from monthNavigation.js to reload data
+// Listen for the custom event from monthNavigation.js to reload data when the month changes
 window.addEventListener('monthChanged', loadBudgetData);
 
-// This runs when the page first loads
-document.addEventListener('DOMContentLoaded', () => {
-    MonthNavigation.init();
-    // A small delay to ensure monthNav component has time to load its HTML before we load data
-    setTimeout(loadBudgetData, 100); 
+// --- THIS IS THE FIX ---
+// This waits for the month navigation to be fully initialized before loading data.
+window.addEventListener('monthNavReady', () => {
+    loadBudgetData();
 });

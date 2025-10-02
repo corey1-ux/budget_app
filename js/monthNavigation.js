@@ -131,6 +131,11 @@ function initMonthNavUI() {
     // Initialize display
     MonthNavigation.init();
     updateMonthDisplay();
+
+    // --- THIS IS THE FIX ---
+    // Fire a custom event to let other scripts know the month is ready.
+    const readyEvent = new CustomEvent('monthNavReady');
+    window.dispatchEvent(readyEvent);
 }
 
 // Auto-load component if this script is included
