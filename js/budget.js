@@ -4,10 +4,15 @@ const addExpenseBtn = document.getElementById('addExpenseBtn');
 const totalIncomeEl = document.getElementById('totalIncome');
 const totalExpensesEl = document.getElementById('totalExpenses');
 const remainingEl = document.getElementById('remaining');
-const prevMonthBtn = document.getElementById('prevMonth');
-const nextMonthBtn = document.getElementById('nextMonth');
-const goToCurrentMonthBtn = document.getElementById('goToCurrentMonth');
-const monthDisplayEl = document.getElementById('currentMonthDisplay');
+
+// A simple debounce function to prevent saving on every single keystroke
+function debounce(func, delay) {
+    let timeout;
+    return function(...args) {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(this, args), delay);
+    };
+}
 
 // Expense item creation
 function createExpenseItem(name = '', amount = '') {
@@ -23,18 +28,20 @@ function createExpenseItem(name = '', amount = '') {
         <button class="btn-remove" title="Remove expense">×</button>
     `;
     
+    const debouncedSave = debounce(saveBudgetData, 500); // Save 500ms after user stops typing
+
     const removeBtn = expenseItem.querySelector('.btn-remove');
     removeBtn.addEventListener('click', function() {
         expenseItem.remove();
         calculateTotals();
-        saveBudgetData();
+        saveBudgetData(); // Save immediately on removal
     });
     
     const inputs = expenseItem.querySelectorAll('input');
     inputs.forEach(input => {
         input.addEventListener('input', () => {
             calculateTotals();
-            saveBudgetData();
+            debouncedSave(); // Use the debounced save here
         });
     });
     
@@ -66,8 +73,8 @@ function calculateTotals() {
     }
 }
 
-// Save current budget data
-function saveBudgetData() {
+// Save current budget data to Supabase
+async function saveBudgetData() {
     const income = parseFloat(incomeInput.value) || 0;
     const expenses = [];
     
@@ -75,28 +82,29 @@ function saveBudgetData() {
     expenseItems.forEach(item => {
         const name = item.querySelector('.expense-name').value;
         const amount = parseFloat(item.querySelector('.expense-value').value) || 0;
-        expenses.push({ name, amount });
+        // Only save expenses that have a name or an amount
+        if (name || amount > 0) {
+            expenses.push({ name, amount });
+        }
     });
     
-    BudgetData.saveMonthData(MonthNavigation.currentMonth, { income, expenses });
+    await BudgetData.saveMonthData(MonthNavigation.currentMonth, { income, expenses });
+    console.log("Budget saved for", MonthNavigation.currentMonth);
 }
 
-// Load budget data for current month
-function loadBudgetData() {
-    const data = BudgetData.getMonthData(MonthNavigation.currentMonth);
+// Load budget data for current month from Supabase
+async function loadBudgetData() {
+    const data = await BudgetData.getMonthData(MonthNavigation.currentMonth);
     
-    // Load income
     incomeInput.value = data.income || '';
-    
-    // Clear existing expenses
     expensesList.innerHTML = '';
     
-    // Load expenses or create default 5
     if (data.expenses && data.expenses.length > 0) {
         data.expenses.forEach(expense => {
             expensesList.appendChild(createExpenseItem(expense.name, expense.amount));
         });
     } else {
+        // Start with 5 blank rows if no data exists
         for (let i = 0; i < 5; i++) {
             expensesList.appendChild(createExpenseItem());
         }
@@ -105,49 +113,26 @@ function loadBudgetData() {
     calculateTotals();
 }
 
-// Update month display
-function updateMonthDisplay() {
-    monthDisplayEl.textContent = MonthNavigation.getDisplayName(MonthNavigation.currentMonth);
-    
-    // Show/hide "Go to Current Month" button
-    if (MonthNavigation.isViewingCurrentMonth()) {
-        goToCurrentMonthBtn.classList.add('hidden');
-    } else {
-        goToCurrentMonthBtn.classList.remove('hidden');
-    }
-}
-
-// Month navigation event listeners
-prevMonthBtn.addEventListener('click', () => {
-    MonthNavigation.previousMonth();
-    updateMonthDisplay();
-    loadBudgetData();
-});
-
-nextMonthBtn.addEventListener('click', () => {
-    MonthNavigation.nextMonth();
-    updateMonthDisplay();
-    loadBudgetData();
-});
-
-goToCurrentMonthBtn.addEventListener('click', () => {
-    MonthNavigation.goToCurrent();
-    updateMonthDisplay();
-    loadBudgetData();
-});
+// --- EVENT LISTENERS & INITIALIZATION ---
 
 // Add expense button
 addExpenseBtn.addEventListener('click', () => {
     expensesList.appendChild(createExpenseItem());
 });
 
-// Income input
+// Income input listener with debounce
+const debouncedSave = debounce(saveBudgetData, 500);
 incomeInput.addEventListener('input', () => {
     calculateTotals();
-    saveBudgetData();
+    debouncedSave();
 });
 
-// Initialize on page load
-MonthNavigation.init();
-updateMonthDisplay();
-loadBudgetData();
+// Listen for the custom event from monthNavigation.js to reload data
+window.addEventListener('monthChanged', loadBudgetData);
+
+// This runs when the page first loads
+document.addEventListener('DOMContentLoaded', () => {
+    MonthNavigation.init();
+    // A small delay to ensure monthNav component has time to load its HTML before we load data
+    setTimeout(loadBudgetData, 100); 
+});
