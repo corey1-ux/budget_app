@@ -7,27 +7,25 @@ const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 console.log('Supabase client initialized');
 
-// This function protects pages from unauthenticated users
+
 async function requireAuth() {
     try {
         const { data: { session }, error } = await supabase.auth.getSession();
-        
         if (error) throw error;
         
-        // If there is NO session, redirect to the login page
         if (!session) {
             console.log('No session found, redirecting to login...');
-            window.location.href = 'login.html'; // CORRECTED: Redirect to login.html
+            // Redirect to the landing page, where the user can open the modal
+            window.location.href = 'index.html'; 
             return null;
         }
         
-        // User is authenticated, return the user object
         console.log('User authenticated:', session.user.email);
         return session.user;
         
     } catch (error) {
         console.error('Auth check error:', error);
-        window.location.href = 'login.html'; // CORRECTED: Redirect to login.html on error
+        window.location.href = 'index.html';
         return null;
     }
 }

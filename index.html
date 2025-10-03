@@ -4,8 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BudgetFlow - Take Control of Your Finances</title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
     <script src="https://unpkg.com/lucide@latest"></script>
     <link rel="stylesheet" href="css/landing.css">
+    <link rel="stylesheet" href="css/login.css">
 </head>
 <body>
     <div class="container">
@@ -16,12 +20,10 @@
             <div class="nav-links">
                 <a href="#features">Features</a>
                 <a href="#how-it-works">How It Works</a>
-                <a href="#pricing">Pricing</a>
-                <a href="#about">About</a>
             </div>
             <div style="display: flex; gap: 1rem;">
-                <a href="login.html" class="btn btn-secondary">Sign In</a>
-                <a href="login.html" class="btn btn-primary">Get Started</a>
+                <button class="btn btn-secondary" id="signInBtnNav">Sign In</button>
+                <button class="btn btn-primary" id="getStartedBtnNav">Get Started</button>
             </div>
         </nav>
 
@@ -33,10 +35,10 @@
             <h1>Take control of<br>your finances</h1>
             <p>The modern way to track spending, set budgets, and reach your financial goals. All in one beautiful, secure platform.</p>
             <div class="hero-cta">
-                <a href="login.html" class="btn btn-primary">
+                <button class="btn btn-primary" id="getStartedBtnHero">
                     Start Free Trial
                     <i data-lucide="arrow-right" style="width: 18px; height: 18px;"></i>
-                </a>
+                </button>
                 <button class="btn btn-secondary">
                     <i data-lucide="play-circle" style="width: 18px; height: 18px;"></i>
                     Watch Demo
@@ -167,10 +169,10 @@
             <div class="cta-box">
                 <h2>Ready to transform your finances?</h2>
                 <p>Join thousands of users who are already taking control of their money.</p>
-                <a href="login.html" class="btn btn-primary" style="font-size: 1.1rem; padding: 1rem 2.5rem;">
+                <button class="btn btn-primary" id="getStartedBtnCTA" style="font-size: 1.1rem; padding: 1rem 2.5rem;">
                     Get Started Free
                     <i data-lucide="arrow-right" style="width: 20px; height: 20px;"></i>
-                </a>
+                </button>
             </div>
         </section>
 
@@ -212,6 +214,55 @@
             </div>
         </footer>
     </div>
+
+    <div class="modal-overlay" id="loginModal">
+        <div class="login-wrap">
+            <button class="modal-close" id="closeLoginModal">&times;</button>
+            <div class="login-html">
+                <input id="tab-1" type="radio" name="tab" class="sign-in" checked><label for="tab-1" class="tab">Sign In</label>
+                <input id="tab-2" type="radio" name="tab" class="sign-up"><label for="tab-2" class="tab">Sign Up</label>
+                <div class="login-form">
+                    <div class="sign-in-htm">
+                        <form id="signInForm">
+                            <div class="group">
+                                <label for="signin-user" class="label">Email</label>
+                                <input id="signin-user" type="email" class="input" required>
+                            </div>
+                            <div class="group">
+                                <label for="signin-pass" class="label">Password</label>
+                                <input id="signin-pass" type="password" class="input" data-type="password" required>
+                            </div>
+                            <div class="group">
+                                <input type="submit" class="button" value="Sign In">
+                            </div>
+                        </form>
+                    </div>
+                    <div class="sign-up-htm">
+                        <form id="signUpForm">
+                             <div class="group">
+                                <label for="signup-email" class="label">Email Address</label>
+                                <input id="signup-email" type="email" class="input" required>
+                            </div>
+                            <div class="group">
+                                <label for="signup-pass" class="label">Password</label>
+                                <input id="signup-pass" type="password" class="input" data-type="password" required>
+                            </div>
+                            <div class="group">
+                                <label for="signup-pass-repeat" class="label">Repeat Password</label>
+                                <input id="signup-pass-repeat" type="password" class="input" data-type="password" required>
+                            </div>
+                            <div class="group">
+                                <input type="submit" class="button" value="Sign Up">
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="js/supabaseClient.js"></script>
     <script src="js/landing.js"></script>
+    <script src="js/login.js"></script>
 </body>
 </html>
