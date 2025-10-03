@@ -3,84 +3,215 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Budget App</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link rel="stylesheet" href="css/login.css">
+    <title>BudgetFlow - Take Control of Your Finances</title>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="css/landing.css">
 </head>
 <body>
-    <nav class="navbar">
-        <div class="nav-brand">
-            <span class="logo">💰</span>
-            <h1>Manalo/Sigler</h1>
-        </div>
-    </nav>
-    <div class ="background">
-    <main class="container">
-        <div class="login-wrap">
-            <div class="login-html">
-                <input id="tab-1" type="radio" name="tab" class="sign-in" checked>
-                <label for="tab-1" class="tab">Sign In</label>
-                <input id="tab-2" type="radio" name="tab" class="sign-up">
-                <label for="tab-2" class="tab">Sign Up</label>
-                <div class="login-form">
-                    <!-- Sign In Form -->
-                    <div class="sign-in-htm">
-                        <form id="signInForm">
-                            <div class="group">
-                                <label for="signin-user" class="label">email</label>
-                                <input id="signin-user" type="email" class="input" required>
-                            </div>
-                            <div class="group">
-                                <label for="signin-pass" class="label">Password</label>
-                                <input id="signin-pass" type="password" class="input" data-type="password" required>
-                            </div>
-                            <div class="group">
-                                <input id="check" type="checkbox" class="check" checked>
-                                <label for="check"><span class="icon"></span> Keep me Signed in</label>
-                            </div>
-                            <div class="group">
-                                <input type="submit" class="button" value="Sign In">
-                            </div>
-                            <div class="hr"></div>
-                            <div class="foot-lnk">
-                                <a href="#forgot">Forgot Password?</a>
-                        </form>
+    <div class="container">
+        <nav>
+            <div class="logo">
+                💰 BudgetFlow
+            </div>
+            <div class="nav-links">
+                <a href="#features">Features</a>
+                <a href="#how-it-works">How It Works</a>
+                <a href="#pricing">Pricing</a>
+                <a href="#about">About</a>
+            </div>
+            <div style="display: flex; gap: 1rem;">
+                <a href="login.html" class="btn btn-secondary">Sign In</a>
+                <a href="login.html" class="btn btn-primary">Get Started</a>
+            </div>
+        </nav>
+
+        <section class="hero">
+            <div class="hero-badge">
+                <i data-lucide="sparkles" style="width: 16px; height: 16px;"></i>
+                <span>New:</span> Connect unlimited bank accounts
+            </div>
+            <h1>Take control of<br>your finances</h1>
+            <p>The modern way to track spending, set budgets, and reach your financial goals. All in one beautiful, secure platform.</p>
+            <div class="hero-cta">
+                <a href="login.html" class="btn btn-primary">
+                    Start Free Trial
+                    <i data-lucide="arrow-right" style="width: 18px; height: 18px;"></i>
+                </a>
+                <button class="btn btn-secondary">
+                    <i data-lucide="play-circle" style="width: 18px; height: 18px;"></i>
+                    Watch Demo
+                </button>
+            </div>
+            <div class="hero-stats">
+                <div class="stat">
+                    <div class="stat-number">10K+</div>
+                    <div class="stat-label">Active Users</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number">$2.4M</div>
+                    <div class="stat-label">Money Saved</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number">4.9★</div>
+                    <div class="stat-label">User Rating</div>
+                </div>
+            </div>
+        </section>
+
+        <section class="features" id="features">
+            <div class="section-header">
+                <div class="section-badge">FEATURES</div>
+                <h2>Everything you need to manage your money</h2>
+                <p>Powerful features designed to make budgeting simple, automatic, and actually enjoyable.</p>
+            </div>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <div class="feature-icon"><i data-lucide="link"></i></div>
+                    <h3>Bank Sync</h3>
+                    <p>Automatically connect your bank accounts and credit cards. Your transactions update in real-time, so you always know where you stand.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon"><i data-lucide="pie-chart"></i></div>
+                    <h3>Smart Budgets</h3>
+                    <p>Create custom budgets that adapt to your spending habits. Get alerts before you overspend and celebrate when you stay on track.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon"><i data-lucide="target"></i></div>
+                    <h3>Financial Goals</h3>
+                    <p>Set savings goals and track your progress. Whether it's a vacation or emergency fund, we'll help you get there faster.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon"><i data-lucide="bar-chart-3"></i></div>
+                    <h3>Insights & Reports</h3>
+                    <p>Understand your spending patterns with beautiful visualizations. See where your money goes and find opportunities to save.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon"><i data-lucide="shield-check"></i></div>
+                    <h3>Bank-Level Security</h3>
+                    <p>Your data is encrypted end-to-end with the same 256-bit encryption banks use. We never see your credentials.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon"><i data-lucide="smartphone"></i></div>
+                    <h3>Works Everywhere</h3>
+                    <p>Access your finances from any device. Seamlessly sync between your phone, tablet, and computer.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="how-it-works" id="how-it-works">
+            <div class="section-header">
+                <div class="section-badge">HOW IT WORKS</div>
+                <h2>Get started in minutes</h2>
+                <p>Three simple steps to financial clarity</p>
+            </div>
+            <div class="steps">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <h3>Connect Your Accounts</h3>
+                    <p>Securely link your bank accounts and credit cards. We support over 10,000 financial institutions.</p>
+                </div>
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <h3>Set Your Budgets</h3>
+                    <p>Create budgets for different categories. We'll suggest amounts based on your spending history.</p>
+                </div>
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <h3>Track & Save</h3>
+                    <p>Watch your progress in real-time. Get insights and stay on track to reach your financial goals.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="social-proof">
+            <div class="section-header">
+                <div class="section-badge">TESTIMONIALS</div>
+                <h2>Loved by thousands of users</h2>
+                <p>See what people are saying about BudgetFlow</p>
+            </div>
+            <div class="testimonial-grid">
+                <div class="testimonial">
+                    <div class="testimonial-text">"BudgetFlow helped me save $5,000 in just 6 months. The automatic categorization and spending alerts are game-changers!"</div>
+                    <div class="testimonial-author">
+                        <div class="author-avatar">SC</div>
+                        <div class="author-info">
+                            <h4>Sarah Chen</h4>
+                            <p>Software Engineer</p>
                         </div>
                     </div>
-                    
-                    <!-- Sign Up Form -->
-                    <div class="sign-up-htm">
-                        <form id="signUpForm">
-                            <div class="group">
-                                <label for="signup-user" class="label">Email</label>
-                                <input id="signup-user" type="email" class="input" required>
-                            </div>
-                            <div class="group">
-                                <label for="signup-pass" class="label">Password</label>
-                                <input id="signup-pass" type="password" class="input" data-type="password" required>
-                            </div>
-                            <div class="group">
-                                <label for="signup-pass-repeat" class="label">Repeat Password</label>
-                                <input id="signup-pass-repeat" type="password" class="input" data-type="password" required>
-                            </div>
-                            <div class="group">
-                                <label for="signup-email" class="label">Email Address</label>
-                                <input id="signup-email" type="email" class="input" required>
-                            </div>
-                            <div class="group">
-                                <input type="submit" class="button" value="Sign Up">
-                            </div>
-                            <div class="hr"></div>
-                            <div class="foot-lnk">
-                                <label for="tab-1">Already Member?</label>
-                            </div>
-                        </form>
+                </div>
+                <div class="testimonial">
+                    <div class="testimonial-text">"Finally, a budget app that doesn't feel like homework. The interface is beautiful and it actually makes me excited to check my finances."</div>
+                    <div class="testimonial-author">
+                        <div class="author-avatar">MR</div>
+                        <div class="author-info">
+                            <h4>Marcus Rodriguez</h4>
+                            <p>Teacher</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="testimonial">
+                    <div class="testimonial-text">"The bank sync feature is flawless. I've tried 5 other apps and this is the only one that actually works reliably with my credit union."</div>
+                    <div class="testimonial-author">
+                        <div class="author-avatar">JK</div>
+                        <div class="author-info">
+                            <h4>Jessica Kim</h4>
+                            <p>Nurse Supervisor</p>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
-    </main>
-    <script src="js/supabaseClient.js"></script>
-    <script src="js/login.js"></script>
+        </section>
+
+        <section class="cta-section">
+            <div class="cta-box">
+                <h2>Ready to transform your finances?</h2>
+                <p>Join thousands of users who are already taking control of their money.</p>
+                <a href="login.html" class="btn btn-primary" style="font-size: 1.1rem; padding: 1rem 2.5rem;">
+                    Get Started Free
+                    <i data-lucide="arrow-right" style="width: 20px; height: 20px;"></i>
+                </a>
+            </div>
+        </section>
+
+        <footer>
+            <div class="footer-content">
+                <div class="footer-section">
+                    <div class="logo" style="margin-bottom: 1rem;">💰 BudgetFlow</div>
+                    <p style="color: var(--text-secondary); max-width: 300px; line-height: 1.6;">The modern way to manage your money. Built for people who want to take control of their financial future.</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Product</h4>
+                    <ul>
+                        <li><a href="#">Features</a></li>
+                        <li><a href="#">Pricing</a></li>
+                        <li><a href="#">Security</a></li>
+                        <li><a href="#">Roadmap</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Company</h4>
+                    <ul>
+                        <li><a href="#">About</a></li>
+                        <li><a href="#">Blog</a></li>
+                        <li><a href="#">Careers</a></li>
+                        <li><a href="#">Contact</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Legal</h4>
+                    <ul>
+                        <li><a href="#">Privacy</a></li>
+                        <li><a href="#">Terms</a></li>
+                        <li><a href="#">Security</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 BudgetFlow. All rights reserved.</p>
+            </div>
+        </footer>
+    </div>
+    <script src="js/landing.js"></script>
 </body>
 </html>

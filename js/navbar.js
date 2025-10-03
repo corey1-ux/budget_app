@@ -18,7 +18,8 @@ async function loadNavbar() {
     }
 }
 
-// Update Nav based on Login State
+// js/navbar.js
+
 async function updateNavUI() {
     const userProfile = document.getElementById('userProfile');
     const userGreeting = document.getElementById('userGreeting');
@@ -28,36 +29,50 @@ async function updateNavUI() {
 
     try {
         const { data: { session } } = await supabase.auth.getSession();
+        const isLandingPage = window.location.pathname === '/' || window.location.pathname.endsWith('/index.html');
 
         if (session) {
             // User is logged IN
             const user = session.user;
-            const fullName = user.user_metadata?.full_name || user.email.split('@')[0];
-            const avatarUrl = user.user_metadata?.avatar_url;
-
-            userGreeting.textContent = `Hello, ${fullName}`;
-            if (avatarUrl) {
-                userAvatar.src = avatarUrl;
-            }
             
-            userProfile.style.display = 'flex';
-            signInBtn.style.display = 'none';
-            mainNavLinks.forEach(link => link.style.display = 'block');
-
+            if (isLandingPage) {
+                // On landing page, show a "Go to Dashboard" button
+                if (signInBtn) {
+                    signInBtn.textContent = 'Go to Dashboard';
+                    signInBtn.href = 'dashboard.html';
+                    signInBtn.style.display = 'block';
+                }
+                if (userProfile) userProfile.style.display = 'none';
+                mainNavLinks.forEach(link => link.style.display = 'none');
+            } else {
+                // On app pages, show the full user profile
+                const fullName = user.user_metadata?.full_name || user.email.split('@')[0];
+                const avatarUrl = user.user_metadata?.avatar_url;
+                if(userGreeting) userGreeting.textContent = `Hello, ${fullName}`;
+                
+                // --- THIS IS THE FIX ---
+                if (avatarUrl && userAvatar) userAvatar.src = avatarUrl;
+                
+                if (userProfile) userProfile.style.display = 'flex';
+                if (signInBtn) signInBtn.style.display = 'none';
+                mainNavLinks.forEach(link => link.style.display = 'block');
+            }
         } else {
             // User is logged OUT
-            userProfile.style.display = 'none';
-            signInBtn.style.display = 'block';
-            mainNavLinks.forEach(link => link.style.display = 'none'); // Hide links if not logged in
+            if (userProfile) userProfile.style.display = 'none';
+            if (signInBtn) {
+                signInBtn.textContent = 'Sign In';
+                signInBtn.href = 'login.html';
+                signInBtn.style.display = 'block';
+            }
+            mainNavLinks.forEach(link => link.style.display = 'none');
         }
     } catch (error) {
         console.error('Error updating nav UI:', error);
-        userProfile.style.display = 'none';
-        signInBtn.style.display = 'block';
+        if (userProfile) userProfile.style.display = 'none';
+        if (signInBtn) signInBtn.style.display = 'block';
     }
 }
-
-
 // Initialize navbar functionality
 function initNavbar() {
     const hamburger = document.getElementById('hamburger');

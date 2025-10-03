@@ -1,3 +1,13 @@
+// At the very top of js/dashboard.js
+document.addEventListener('DOMContentLoaded', async () => {
+    const user = await requireAuth();
+    if (!user) return; // Stop executing if not authenticated
+
+    // The rest of your dashboard code...
+    MonthNavigation.init();
+    loadDashboardData();
+});
+
 const MonthNavigation = {
     currentMonth: null,
     
