@@ -1,51 +1,52 @@
 // js/dashboard.js
 
-// This function will be called to load all data.
-async function loadAllDashboardData() {
-    // Ensure the month is ready before proceeding.
-    if (!MonthNavigation.currentMonth) {
-        console.log("Waiting for month navigation to be ready...");
-        return;
-    }
-
+// This is the main function that will set up and load all dashboard data.
+async function initializeDashboard() {
+    // 1. Wait for a logged-in user.
     const user = await requireAuth();
     if (!user) return;
 
-    // --- INITIALIZATION ---
+    // 2. Ensure the month navigation is ready before proceeding.
+    if (!MonthNavigation.currentMonth) {
+        console.error("Dashboard initialized before month navigation was ready.");
+        return;
+    }
+
+    // 3. Set the welcome greeting.
     setGreeting(user);
     
+    // 4. Trigger animations for all cards.
     document.querySelectorAll('.card').forEach((card, index) => {
         card.style.animationDelay = `${index * 0.05}s`;
         card.classList.add('card-fade-in');
     });
     
+    // 5. Load all data for the dashboard.
     lucide.createIcons();
     loadNetWorth();
-    loadBudgetData();
+    loadSpendingAndBudgetData(); 
     loadRecentTransactions();
     loadRecurringPayments();
 }
 
 // --- EVENT LISTENERS ---
 
-// This runs when the page first loads.
-window.addEventListener('DOMContentLoaded', () => {
-    // We don't load data here anymore. We wait for the month to be ready.
-});
+// This is the primary trigger. It waits until the month navigation is fully initialized.
+window.addEventListener('monthNavReady', initializeDashboard);
 
-// This runs every time the page is shown, including when using the back button.
-window.addEventListener('pageshow', function(event) {
+// This handles when the user changes the month.
+window.addEventListener('monthChanged', initializeDashboard);
+
+// This handles when a user navigates back to the page.
+window.addEventListener('pageshow', (event) => {
     if (event.persisted) {
-        loadAllDashboardData();
+        // Re-run initialization if the page is from the back-forward cache.
+        initializeDashboard();
     }
 });
 
-// This is the main trigger. It runs once the month navigation is fully initialized.
-window.addEventListener('monthNavReady', loadAllDashboardData);
-window.addEventListener('monthChanged', loadAllDashboardData);
 
-
-// --- FUNCTION DEFINITIONS (No changes below this line) ---
+// --- FUNCTION DEFINITIONS ---
 
 function setGreeting(user) {
     const hour = new Date().getHours();
@@ -66,23 +67,36 @@ async function loadNetWorth() {
     } catch (err) { console.error("Error loading net worth:", err); }
 }
 
-async function loadBudgetData() {
-    const data = await BudgetData.getMonthData(MonthNavigation.currentMonth);
-    const income = data.income || 0;
-    const totalExpenses = data.expenses.reduce((sum, exp) => sum + exp.amount, 0);
-    const remaining = income - totalExpenses;
-    
-    countUp(document.getElementById('budgetSpent'), totalExpenses);
-    countUp(document.getElementById('budgetRemaining'), remaining);
-    document.getElementById('budgetRemaining').className = remaining >= 0 ? 'main-value positive' : 'main-value negative';
+async function loadSpendingAndBudgetData() {
+    try {
+        const budgetInfo = await BudgetData.getMonthData(MonthNavigation.currentMonth);
+        const budgetedIncome = budgetInfo.income || 0;
 
-    const percentage = income > 0 ? (totalExpenses / income) * 100 : 0;
-    document.getElementById('budgetProgress').style.width = `${Math.min(percentage, 100)}%`;
-    document.getElementById('progress-label').textContent = `${formatCurrency(totalExpenses)} of ${formatCurrency(income)}`;
-    document.getElementById('progress-percentage').textContent = `${Math.round(percentage)}%`;
+        const { data: transactions, error } = await supabase.from('transactions')
+            .select('amount, category, merchant, type')
+            .eq('month_key', MonthNavigation.currentMonth)
+            .eq('type', 'expense');
+        
+        if (error) throw error;
 
-    renderSpendingChart(data.expenses);
-    displayTopExpenses(data.expenses);
+        const totalExpenses = transactions.reduce((sum, t) => sum + t.amount, 0);
+        const remaining = budgetedIncome - totalExpenses;
+
+        countUp(document.getElementById('budgetSpent'), totalExpenses);
+        countUp(document.getElementById('budgetRemaining'), remaining);
+        document.getElementById('budgetRemaining').className = remaining >= 0 ? 'main-value positive' : 'main-value negative';
+
+        const percentage = budgetedIncome > 0 ? (totalExpenses / budgetedIncome) * 100 : 0;
+        document.getElementById('budgetProgress').style.width = `${Math.min(percentage, 100)}%`;
+        document.getElementById('progress-label').textContent = `${formatCurrency(totalExpenses)} of ${formatCurrency(budgetedIncome)}`;
+        document.getElementById('progress-percentage').textContent = `${Math.round(percentage)}%`;
+
+        renderSpendingChart(transactions);
+        displayTopExpenses(transactions);
+
+    } catch (err) {
+        console.error("Error loading spending and budget data:", err);
+    }
 }
 
 async function loadRecentTransactions() {
@@ -127,7 +141,7 @@ async function loadRecurringPayments() {
             <li class="recurring-item">
                 <div class="transaction-details">
                     <div class="name">${t.merchant}</div>
-                    <div class="date">Next on day ${t.day}</div>
+                    <div class="date">Next on day ${t.day.split('-')[2]}</div>
                 </div>
                 <div class="recurring-amount">${formatCurrency(t.amount)}</div>
             </li>`).join('');
@@ -140,7 +154,7 @@ function renderSpendingChart(expenses) {
     if (spendingChartInstance) spendingChartInstance.destroy();
 
     const spendingByCategory = expenses.reduce((acc, expense) => {
-        const category = expense.name || 'Uncategorized';
+        const category = expense.category || 'Uncategorized';
         acc[category] = (acc[category] || 0) + expense.amount;
         return acc;
     }, {});
@@ -151,7 +165,7 @@ function renderSpendingChart(expenses) {
             labels: Object.keys(spendingByCategory),
             datasets: [{
                 data: Object.values(spendingByCategory),
-                backgroundColor: ['#f97316', '#fb923c', '#fdba74', '#fed7aa', '#ffedd5'],
+                backgroundColor: ['#f97316', '#fb923c', '#fdba74', '#fed7aa', '#ffedd5', '#d97706', '#b45309'],
                 borderColor: '#fff',
                 borderWidth: 4,
             }]
@@ -179,17 +193,22 @@ function displayTopExpenses(expenses) {
 
     listEl.innerHTML = topFive.map(t => `
         <li class="transaction-item">
+             <div class="transaction-icon expense"><i data-lucide="minus"></i></div>
             <div class="transaction-details">
-                <div class="name">${t.name}</div>
+                <div class="name">${t.merchant}</div>
+                <div class="category">${t.category}</div>
             </div>
             <div class="transaction-amount expense">${formatCurrency(t.amount)}</div>
         </li>`
     ).join('');
+    lucide.createIcons();
 }
 
 function countUp(el, endValue) {
     if (!el) return;
-    let startValue = 0; const duration = 1500; const frameRate = 60;
+    let startValue = parseFloat(el.textContent.replace(/[^0-9.-]+/g,"")) || 0;
+    const duration = 1000;
+    const frameRate = 60;
     const totalFrames = Math.round(duration / (1000 / frameRate));
     const increment = (endValue - startValue) / totalFrames;
     let currentFrame = 0;
@@ -198,7 +217,7 @@ function countUp(el, endValue) {
 
     el.counter = setInterval(() => {
         startValue += increment; currentFrame++;
-        el.textContent = formatCurrency(startValue, endValue < 100);
+        el.textContent = formatCurrency(startValue);
         if (currentFrame === totalFrames) {
             clearInterval(el.counter);
             el.textContent = formatCurrency(endValue);
