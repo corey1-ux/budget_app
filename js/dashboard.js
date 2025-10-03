@@ -1,46 +1,36 @@
 // js/dashboard.js
 
-// This is the main function that will set up and load all dashboard data.
 async function initializeDashboard() {
-    // 1. Wait for a logged-in user.
     const user = await requireAuth();
     if (!user) return;
 
-    // 2. Ensure the month navigation is ready before proceeding.
-    if (!MonthNavigation.currentMonth) {
-        console.error("Dashboard initialized before month navigation was ready.");
-        return;
-    }
-
-    // 3. Set the welcome greeting.
+    // --- INITIALIZATION ---
     setGreeting(user);
     
-    // 4. Trigger animations for all cards.
-    document.querySelectorAll('.card').forEach((card, index) => {
-        card.style.animationDelay = `${index * 0.05}s`;
-        card.classList.add('card-fade-in');
-    });
-    
-    // 5. Load all data for the dashboard.
-    lucide.createIcons();
-    loadNetWorth();
-    loadSpendingAndBudgetData(); 
-    loadRecentTransactions();
-    loadRecurringPayments();
+    const loadAllDashboardData = async () => {
+        if (!MonthNavigation.currentMonth) return;
+
+        document.querySelectorAll('.card').forEach((card, index) => {
+            card.style.animationDelay = `${index * 0.05}s`;
+            card.classList.add('card-fade-in');
+        });
+        
+        lucide.createIcons();
+        loadNetWorth();
+        loadSpendingAndBudgetData(); 
+        loadRecentTransactions();
+        loadRecurringPayments();
+    };
+
+    // --- EVENT LISTENERS ---
+    window.addEventListener('monthChanged', loadAllDashboardData);
+    window.addEventListener('monthNavReady', loadAllDashboardData);
 }
 
-// --- EVENT LISTENERS ---
-
-// This is the primary trigger. It waits until the month navigation is fully initialized.
-window.addEventListener('monthNavReady', initializeDashboard);
-
-// This handles when the user changes the month.
-window.addEventListener('monthChanged', initializeDashboard);
-
-// This handles when a user navigates back to the page.
+// --- MAIN EVENT LISTENERS FOR PAGE LIFECYCLE ---
+window.addEventListener('DOMContentLoaded', initializeDashboard);
 window.addEventListener('pageshow', (event) => {
     if (event.persisted) {
-        // Re-run initialization if the page is from the back-forward cache.
         initializeDashboard();
     }
 });
@@ -73,7 +63,7 @@ async function loadSpendingAndBudgetData() {
         const budgetedIncome = budgetInfo.income || 0;
 
         const { data: transactions, error } = await supabase.from('transactions')
-            .select('amount, category, merchant, type')
+            .select('amount, category, merchant, type, account')
             .eq('month_key', MonthNavigation.currentMonth)
             .eq('type', 'expense');
         
@@ -119,7 +109,7 @@ async function loadRecentTransactions() {
                     <div class="transaction-icon ${type}"><i data-lucide="${type === 'income' ? 'plus' : 'minus'}"></i></div>
                     <div class="transaction-details">
                         <div class="name">${t.merchant}</div>
-                        <div class="category">${t.category}</div>
+                        <div class="category">${t.account}</div>
                     </div>
                     <div class="transaction-amount ${type}">${formatCurrency(t.amount)}</div>
                 </li>`;
@@ -141,7 +131,7 @@ async function loadRecurringPayments() {
             <li class="recurring-item">
                 <div class="transaction-details">
                     <div class="name">${t.merchant}</div>
-                    <div class="date">Next on day ${t.day.split('-')[2]}</div>
+                    <div class="date">Next on day ${t.day.slice(-2)}</div>
                 </div>
                 <div class="recurring-amount">${formatCurrency(t.amount)}</div>
             </li>`).join('');
@@ -196,7 +186,7 @@ function displayTopExpenses(expenses) {
              <div class="transaction-icon expense"><i data-lucide="minus"></i></div>
             <div class="transaction-details">
                 <div class="name">${t.merchant}</div>
-                <div class="category">${t.category}</div>
+                <div class="category">${t.account}</div>
             </div>
             <div class="transaction-amount expense">${formatCurrency(t.amount)}</div>
         </li>`

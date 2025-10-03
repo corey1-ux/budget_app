@@ -1,11 +1,10 @@
 // js/transactions.js
 
-// This is the main function that will set up the entire page.
-async function setupTransactionsPage() {
+async function initializeTransactionsPage() {
     const user = await requireAuth();
     if (!user) return;
 
-    // --- DOM ELEMENTS (Defined only when this function runs) ---
+    // --- DOM ELEMENTS (Defined INSIDE the function) ---
     const transactionForm = document.getElementById('transactionForm');
     const transactionsListEl = document.getElementById('transactionsList');
     const typeToggleButtons = document.querySelectorAll('.type-toggle .toggle-btn');
@@ -13,7 +12,7 @@ async function setupTransactionsPage() {
     const dateInput = document.getElementById('day');
 
     if (!transactionForm || !transactionsListEl || !searchFilter || !dateInput) {
-        console.error("Aborting: Essential form elements are missing.");
+        console.error("Essential form elements are missing from the page.");
         return;
     }
 
@@ -22,19 +21,28 @@ async function setupTransactionsPage() {
 
     // --- DATA LOADING & SETUP ---
     const loadPageData = async () => {
-        if (!MonthNavigation.currentMonth) return;
+        if (!MonthNavigation.currentMonth) {
+            console.log("Waiting for month navigation...");
+            return;
+        }
+        
+        lucide.createIcons();
         
         const today = new Date();
-        dateInput.value = today.toISOString().slice(0, 10);
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const dd = String(today.getDate()).padStart(2, '0');
+        dateInput.value = `${yyyy}-${mm}-${dd}`;
 
         await loadCategories();
         await populateAccountsDropdowns();
         await loadTransactions();
     };
 
-    // --- EVENT LISTENERS (Attached once) ---
+    // --- EVENT LISTENERS (Attached once per page load) ---
     if (!window.transactionListenersAttached) {
         window.addEventListener('monthChanged', loadPageData);
+        window.addEventListener('monthNavReady', loadPageData);
 
         typeToggleButtons.forEach(btn => {
             btn.addEventListener('click', () => {
@@ -64,14 +72,13 @@ async function setupTransactionsPage() {
                 if (error) throw error;
                 
                 transactionForm.reset();
-                dateInput.value = new Date().toISOString().slice(0, 10);
+                dateInput.value = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-${String(new Date().getDate()).padStart(2, '0')}`;
                 document.querySelector('.toggle-btn[data-type="expense"]').classList.add('active');
-                document.querySelector('.toggle-btn[data-type="income"]').classList.remove('active');
                 
                 await loadTransactions();
             } catch (err) {
                 console.error('Error adding transaction:', err);
-                alert('Failed to add transaction.');
+                alert('Failed to add transaction. Check console for details.');
             }
         });
 
@@ -79,83 +86,57 @@ async function setupTransactionsPage() {
         
         window.transactionListenersAttached = true;
     }
-
-    // Initial data load for the page
-    await loadPageData();
     
     // --- FUNCTION DEFINITIONS ---
     async function loadTransactions() {
-        if (!MonthNavigation.currentMonth) return;
         try {
-            const { data, error } = await supabase.from('transactions')
-                .select('*')
-                .eq('user_id', user.id)
-                .eq('month_key', MonthNavigation.currentMonth)
-                .order('day', { ascending: false });
+            const { data, error } = await supabase.from('transactions').select('*')
+                .eq('month_key', MonthNavigation.currentMonth).order('day', { ascending: false });
             if (error) throw error;
             transactions = data || [];
             renderTransactions();
-        } catch (err) {
-            console.error('Error loading transactions:', err);
-        }
+        } catch (err) { console.error('Error loading transactions:', err); }
     }
-    
+
     async function loadCategories() {
-        try {
-            const budgetData = await BudgetData.getMonthData(MonthNavigation.currentMonth);
-            const expenseCategories = budgetData.expenses ? budgetData.expenses.map(exp => exp.name).filter(name => name && name.trim()) : [];
-            const defaultCategories = ['Food', 'Transport', 'Entertainment', 'Bills', 'Shopping', 'Other'];
-            allCategories = [...new Set([...expenseCategories, ...defaultCategories])];
-            populateCategoryDropdown();
-        } catch (err) {
-            console.error('Error loading categories:', err);
-        }
+        const budgetData = await BudgetData.getMonthData(MonthNavigation.currentMonth);
+        allCategories = budgetData.expenses.map(exp => exp.name) || [];
+        populateCategoryDropdown();
     }
-    
+
     function populateCategoryDropdown() {
+        const type = document.getElementById('type').value;
         const categorySelect = document.getElementById('category');
-        const currentType = document.getElementById('type').value;
-        categorySelect.innerHTML = '<option value="">Select a category</option>';
-        
-        if (currentType === 'expense') {
-            allCategories.forEach(category => {
-                categorySelect.innerHTML += `<option value="${category}">${category}</option>`;
-            });
+        let options = '<option value="">Select Category</option>';
+        if (type === 'income') {
+            options += '<option value="Salary">Salary</option><option value="Other Income">Other Income</option>';
         } else {
-            const incomeCategories = ['Salary', 'Freelance', 'Investment', 'Gift', 'Other'];
-            incomeCategories.forEach(category => {
-                categorySelect.innerHTML += `<option value="${category}">${category}</option>`;
-            });
+            options += allCategories.map(c => `<option value="${c}">${c}</option>`).join('');
+            options += '<option value="Other">Other</option>';
         }
+        categorySelect.innerHTML = options;
     }
-    
+
     async function populateAccountsDropdowns() {
         try {
-            const { data: accounts, error } = await supabase.from('accounts').select('name').eq('user_id', user.id);
+            const { data, error } = await supabase.from('accounts').select('name');
             if (error) throw error;
             const accountSelect = document.getElementById('account');
-            accountSelect.innerHTML = '<option value="">Select an account</option>';
-            if (accounts && accounts.length > 0) {
-                accounts.forEach(account => {
-                    accountSelect.innerHTML += `<option value="${account.name}">${account.name}</option>`;
-                });
-            }
-        } catch (err) {
-            console.error('Error loading accounts:', err);
-        }
+            accountSelect.innerHTML = '<option value="">Select Account</option>' +
+                data.map(acc => `<option value="${acc.name}">${acc.name}</option>`).join('');
+        } catch (err) { console.error("Error fetching accounts:", err); }
     }
     
     function renderTransactions() {
         const searchTerm = searchFilter.value.toLowerCase();
-        const filteredTransactions = transactions.filter(t => t.merchant.toLowerCase().includes(searchTerm) || t.category.toLowerCase().includes(searchTerm));
-        
-        if (filteredTransactions.length === 0) {
-            transactionsListEl.innerHTML = '<li class="list-item-empty"><p>No transactions found</p></li>';
+        const filtered = transactions.filter(t => t.merchant.toLowerCase().includes(searchTerm));
+
+        if (filtered.length === 0) {
+            transactionsListEl.innerHTML = '<li class="list-item-empty"><p>No transactions found for this month.</p></li>';
             return;
         }
-        
-        transactionsListEl.innerHTML = filteredTransactions.map(t => {
-            // Correctly handle UTC date for display
+
+        transactionsListEl.innerHTML = filtered.map(t => {
             const [year, month, day] = t.day.split('-').map(Number);
             const date = new Date(Date.UTC(year, month - 1, day));
             const formattedDate = date.toLocaleDateString(undefined, { timeZone: 'UTC' });
@@ -163,39 +144,36 @@ async function setupTransactionsPage() {
             return `
                 <li class="transaction-item" data-id="${t.id}">
                     <div class="transaction-icon ${t.type}">
-                        <i data-lucide="${t.type === 'income' ? 'arrow-up-circle' : 'arrow-down-circle'}"></i>
+                        <i data-lucide="${t.type === 'income' ? 'plus' : 'minus'}"></i>
                     </div>
                     <div class="transaction-details">
                         <div class="name">${t.merchant}</div>
-                        <div class="category">${t.category}${t.recurring ? ' • Recurring' : ''}</div>
+                        <div class="category">${t.account}</div>
                     </div>
                     <div class="transaction-info">
                         <div class="amount ${t.type}">${formatCurrency(t.amount)}</div>
                         <div class="date">${formattedDate}</div>
                     </div>
                     <div class="actions">
-                        <button class="action-btn delete-btn" data-id="${t.id}" title="Delete">
-                            <i data-lucide="trash-2"></i>
-                        </button>
+                        <button class="action-btn edit-btn"><i data-lucide="edit-2"></i></button>
+                        <button class="action-btn delete-btn"><i data-lucide="trash-2"></i></button>
                     </div>
-                </li>`;
+                </li>
+            `;
         }).join('');
-        
         lucide.createIcons();
         
         document.querySelectorAll('.delete-btn').forEach(btn => btn.addEventListener('click', handleDelete));
     }
-    
+
     async function handleDelete(e) {
-        const id = e.currentTarget.dataset.id;
-        if (!confirm('Delete this transaction?')) return;
-        
-        try {
-            const { error } = await supabase.from('transactions').delete().eq('id', id);
-            if (error) throw error;
-            await loadTransactions();
-        } catch (err) {
-            console.error('Error deleting transaction:', err);
+        const id = e.currentTarget.closest('.transaction-item').dataset.id;
+        if (confirm('Are you sure you want to delete this transaction?')) {
+            try {
+                const { error } = await supabase.from('transactions').delete().eq('id', id);
+                if (error) throw error;
+                loadTransactions();
+            } catch (err) { console.error("Error deleting:", err); }
         }
     }
     
@@ -204,11 +182,12 @@ async function setupTransactionsPage() {
     }
 }
 
+
 // --- MAIN EVENT LISTENERS FOR PAGE LIFECYCLE ---
-window.addEventListener('monthNavReady', setupTransactionsPage);
+window.addEventListener('DOMContentLoaded', initializeTransactionsPage);
 window.addEventListener('pageshow', (event) => {
     if (event.persisted) {
-        window.transactionListenersAttached = false; // Reset flag
-        setupTransactionsPage();
+        window.transactionListenersAttached = false;
+        initializeTransactionsPage();
     }
 });
