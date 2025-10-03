@@ -1,0 +1,75 @@
+/* css/monthNav.css */
+
+/* Modern Month Navigation Styles */
+.month-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    background-color: #ffffff; /* White background */
+    padding: 1rem 1.5rem;
+    border-radius: 16px; /* Rounded corners to match cards */
+    border: 1px solid #e2e8f0; /* Subtle border */
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); /* Subtle shadow */
+}
+
+.month-display {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem; /* Reduced gap */
+    flex: 1;
+}
+
+.month-display h2 {
+    color: #0f172a; /* Dark text color */
+    font-size: 1.25rem; /* Adjusted font size */
+    font-weight: 700;
+    margin: 0;
+}
+
+.btn-month-nav {
+    background-color: #f8fafc; /* Light grey background */
+    color: #475569; /* Medium grey text */
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    width: 40px;
+    height: 40px;
+    font-size: 1.25rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-month-nav:hover {
+    background-color: #f1f5f9;
+    border-color: #cbd5e1;
+    color: #f97316; /* Orange on hover */
+}
+
+.btn-current-month {
+    background: none;
+    color: #64748b; /* Muted text color */
+    border: none;
+    border-radius: 6px;
+    padding: 0.25rem 0.8rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: color 0.2s ease, opacity 0.2s ease; /* Added opacity transition */
+}
+
+.btn-current-month:hover {
+    color: #f97316; /* Orange on hover */
+}
+
+/* --- THIS IS THE FIX --- */
+.btn-current-month.hidden {
+    /* Instead of display: none, we make it invisible but keep its space */
+    visibility: hidden;
+    opacity: 0;
+    pointer-events: none; /* Prevent clicking the invisible button */
+}

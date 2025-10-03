@@ -3,95 +3,125 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Budget App</title>
+    <title>Dashboard - BudgetFlow</title>
+    
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
     <link rel="stylesheet" href="css/main.css">
     <link rel="stylesheet" href="css/navbar.css">
+    <link rel="stylesheet" href="css/budget.css"> 
     <link rel="stylesheet" href="css/dashboard.css">
-    <link rel="stylesheet" href="css/budget.css">
     <link rel="stylesheet" href="css/settingsModal.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="css/monthNav.css">
 </head>
 <body>
-  <main class="container"></main>
-        <!-- Dashboard Cards -->
+    <main class="container">
+        <div class="header">
+            <h1 id="greeting">Good Morning</h1>
+        </div>
+        
+        <div class="summary-grid">
+            <a href="accounts.html" class="card-link-wrapper">
+                <div class="card summary-card">
+                    <div class="card-header">
+                        <div class="card-icon"><i data-lucide="scale"></i></div>
+                        <h3>Net Worth</h3>
+                    </div>
+                    <div class="card-body">
+                        <p class="main-value" id="netWorthValue">$0.00</p>
+                    </div>
+                </div>
+            </a>
+            <a href="budget.html" class="card-link-wrapper">
+                <div class="card summary-card">
+                    <div class="card-header">
+                        <div class="card-icon"><i data-lucide="arrow-right-circle"></i></div>
+                        <h3>Spent This Month</h3>
+                    </div>
+                    <div class="card-body">
+                        <p class="main-value" id="budgetSpent">$0.00</p>
+                    </div>
+                </div>
+            </a>
+            <a href="budget.html" class="card-link-wrapper">
+                <div class="card summary-card">
+                    <div class="card-header">
+                        <div class="card-icon"><i data-lucide="piggy-bank"></i></div>
+                        <h3>Remaining Budget</h3>
+                    </div>
+                    <div class="card-body">
+                        <p class="main-value" id="budgetRemaining">$0.00</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+        
+        <a href="budget.html" class="card-link-wrapper">
+            <div class="card budget-progress-card">
+                <div class="progress-bar-details">
+                    <span id="progress-label"></span>
+                    <span id="progress-percentage"></span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress" id="budgetProgress"></div>
+                </div>
+            </div>
+        </a>
+
         <div class="dashboard-grid">
-            <!-- Income Card -->
-            <div class="dashboard-card income-card">
-                <div class="card-icon">💵</div>
-                <div class="card-content">
-                    <h3>Total Income</h3>
-                    <p class="card-value" id="dashboardIncome">$0.00</p>
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon"><i data-lucide="list"></i></div>
+                    <h3>Recent Transactions</h3>
+                    <a href="transactions.html" class="card-link">View All</a>
+                </div>
+                <div class="card-body">
+                    <ul class="transaction-list" id="recentTransactionsList">
+                        <li class="list-item-empty"><p>No recent transactions.</p></li>
+                    </ul>
                 </div>
             </div>
-
-            <!-- Expenses Card -->
-            <div class="dashboard-card expenses-card">
-                <div class="card-icon">💸</div>
-                <div class="card-content">
-                    <h3>Total Expenses</h3>
-                    <p class="card-value" id="dashboardExpenses">$0.00</p>
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon"><i data-lucide="trending-up"></i></div>
+                    <h3>Top Expenses</h3>
+                </div>
+                <div class="card-body">
+                    <ul class="transaction-list" id="topExpensesList">
+                        <li class="list-item-empty"><p>No expenses to show.</p></li>
+                    </ul>
                 </div>
             </div>
-
-            <!-- Remaining Card -->
-            <div class="dashboard-card remaining-card">
-                <div class="card-icon">💰</div>
-                <div class="card-content">
-                    <h3>Remaining</h3>
-                    <p class="card-value" id="dashboardRemaining">$0.00</p>
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon"><i data-lucide="pie-chart"></i></div>
+                    <h3>Spending by Category</h3>
+                </div>
+                <div class="card-body chart-container">
+                    <canvas id="spendingChart"></canvas>
                 </div>
             </div>
-        </div>
-
-        <!-- Chart Section -->
-        <div class="chart-container">
-            <h3>Budget Overview</h3>
-            <div class="chart-wrapper">
-                <canvas id="budgetChart"></canvas>
-                <div class="chart-center-text">
-                    <div class="chart-percentage" id="chartPercentage">0%</div>
-                    <div class="chart-label">Spent</div>
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-icon"><i data-lucide="repeat"></i></div>
+                    <h3>Upcoming Recurring</h3>
                 </div>
-            </div>
-            <div class="chart-legend">
-                <div class="legend-item">
-                    <span class="legend-color" style="background-color: #3498db;"></span>
-                    <span>Remaining</span>
+                <div class="card-body">
+                    <ul class="recurring-list" id="recurringPaymentsList">
+                         <li class="list-item-empty"><p>No recurring payments found.</p></li>
+                    </ul>
                 </div>
-                <div class="legend-item">
-                    <span class="legend-color" style="background-color: #e74c3c;"></span>
-                    <span>Expenses</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Quick Actions -->
-        <div class="quick-actions">
-            <h3>Quick Actions</h3>
-            <div class="action-buttons">
-                <a href="budget.html" class="action-btn">
-                    <span class="action-icon">📝</span>
-                    <span>Edit Budget</span>
-                </a>
-                <a href="transactions.html" class="action-btn">
-                    <span class="action-icon">➕</span>
-                    <span>Add Transaction</span>
-                </a>
-                <a href="reports.html" class="action-btn">
-                    <span class="action-icon">📊</span>
-                    <span>View Reports</span>
-                </a>
             </div>
         </div>
     </main>
-</body>
-<script src="js/settingsModal.js"></script>
-<script src="js/navbar.js"></script>
+    
     <script src="js/supabaseClient.js"></script>
-<script src="js/monthNavigation.js"></script>
+    <script src="js/navbar.js"></script>
+    <script src="js/settingsModal.js"></script>
+    <script src="js/monthNavigation.js"></script>
     <script src="js/budgetData.js"></script>
     <script src="js/dashboard.js"></script>
-    
 </body>
 </html>
