@@ -10,8 +10,6 @@
     --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.06);
 }
 
-/* Import Roboto font */
-@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap');
 
 * {
     margin: 0;

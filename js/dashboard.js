@@ -1,14 +1,19 @@
 // js/dashboard.js
 
-// This is the main function that runs all the dashboard logic.
-async function initializeDashboard() {
+// This function will be called to load all data.
+async function loadAllDashboardData() {
+    // Ensure the month is ready before proceeding.
+    if (!MonthNavigation.currentMonth) {
+        console.log("Waiting for month navigation to be ready...");
+        return;
+    }
+
     const user = await requireAuth();
     if (!user) return;
 
     // --- INITIALIZATION ---
     setGreeting(user);
     
-    // Add animation class to all cards for a smooth fade-in
     document.querySelectorAll('.card').forEach((card, index) => {
         card.style.animationDelay = `${index * 0.05}s`;
         card.classList.add('card-fade-in');
@@ -24,16 +29,20 @@ async function initializeDashboard() {
 // --- EVENT LISTENERS ---
 
 // This runs when the page first loads.
-window.addEventListener('DOMContentLoaded', initializeDashboard);
+window.addEventListener('DOMContentLoaded', () => {
+    // We don't load data here anymore. We wait for the month to be ready.
+});
 
 // This runs every time the page is shown, including when using the back button.
 window.addEventListener('pageshow', function(event) {
-    // `event.persisted` is true if the page was restored from the bfcache.
     if (event.persisted) {
-        // Re-run the initialization to restart animations and fetch fresh data.
-        initializeDashboard();
+        loadAllDashboardData();
     }
 });
+
+// This is the main trigger. It runs once the month navigation is fully initialized.
+window.addEventListener('monthNavReady', loadAllDashboardData);
+window.addEventListener('monthChanged', loadAllDashboardData);
 
 
 // --- FUNCTION DEFINITIONS (No changes below this line) ---
@@ -78,8 +87,11 @@ async function loadBudgetData() {
 
 async function loadRecentTransactions() {
     try {
-        const { data, error } = await supabase.from('transactions').select('*').limit(5)
-            .eq('month_key', MonthNavigation.currentMonth).order('day', { ascending: false });
+        const { data, error } = await supabase.from('transactions').select('*')
+            .eq('month_key', MonthNavigation.currentMonth)
+            .order('day', { ascending: false })
+            .limit(5);
+
         if (error) throw error;
         const listEl = document.getElementById('recentTransactionsList');
         if (!data || data.length === 0) {
@@ -87,21 +99,21 @@ async function loadRecentTransactions() {
             return;
         }
         listEl.innerHTML = data.map(t => {
-            const type = t.tag === 'income' ? 'income' : 'expense';
+            const type = t.type === 'income' ? 'income' : 'expense';
             return `
                 <li class="transaction-item">
                     <div class="transaction-icon ${type}"><i data-lucide="${type === 'income' ? 'plus' : 'minus'}"></i></div>
                     <div class="transaction-details">
                         <div class="name">${t.merchant}</div>
-                        <div class="category">${t.tag}</div>
+                        <div class="category">${t.category}</div>
                     </div>
                     <div class="transaction-amount ${type}">${formatCurrency(t.amount)}</div>
                 </li>`;
-    }).join('');
+        }).join('');
         lucide.createIcons();
     } catch (err) { console.error("Error loading recent transactions:", err); }
 }
-
+    
 async function loadRecurringPayments() {
     try {
         const { data, error } = await supabase.from('transactions').select('*').eq('recurring', true).order('day', { ascending: true });
@@ -177,20 +189,16 @@ function displayTopExpenses(expenses) {
 
 function countUp(el, endValue) {
     if (!el) return;
-    let startValue = 0;
-    const duration = 1500;
-    const frameRate = 60;
+    let startValue = 0; const duration = 1500; const frameRate = 60;
     const totalFrames = Math.round(duration / (1000 / frameRate));
     const increment = (endValue - startValue) / totalFrames;
     let currentFrame = 0;
     
-    // Clear any existing counter on the element
     if (el.counter) clearInterval(el.counter);
 
     el.counter = setInterval(() => {
-        startValue += increment;
-        currentFrame++;
-        el.textContent = formatCurrency(startValue);
+        startValue += increment; currentFrame++;
+        el.textContent = formatCurrency(startValue, endValue < 100);
         if (currentFrame === totalFrames) {
             clearInterval(el.counter);
             el.textContent = formatCurrency(endValue);

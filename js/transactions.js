@@ -1,521 +1,214 @@
-// At the very top of js/dashboard.js
-document.addEventListener('DOMContentLoaded', async () => {
+// js/transactions.js
+
+// This is the main function that will set up the entire page.
+async function setupTransactionsPage() {
     const user = await requireAuth();
-    if (!user) return; // Stop executing if not authenticated
+    if (!user) return;
 
-    // The rest of your dashboard code...
-    MonthNavigation.init();
-    loadDashboardData();
-});
+    // --- DOM ELEMENTS (Defined only when this function runs) ---
+    const transactionForm = document.getElementById('transactionForm');
+    const transactionsListEl = document.getElementById('transactionsList');
+    const typeToggleButtons = document.querySelectorAll('.type-toggle .toggle-btn');
+    const searchFilter = document.getElementById('searchFilter');
+    const dateInput = document.getElementById('day');
 
-const MonthNavigation = {
-    currentMonth: null,
-    
-    init() {
-        const savedMonth = this.getSavedMonth();
-        const today = new Date();
-        this.currentMonth = savedMonth || this.formatMonthKey(today);
-        this.saveCurrentMonth();
-        return this.currentMonth;
-    },
-    
-    getSavedMonth() {
-        return localStorage.getItem('currentMonth');
-    },
-    
-    saveCurrentMonth() {
-        localStorage.setItem('currentMonth', this.currentMonth);
-    },
-    
-    formatMonthKey(date) {
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        return `${year}-${month}`;
-    },
-    
-    getRealCurrentMonth() {
-        return this.formatMonthKey(new Date());
-    },
-    
-    isViewingCurrentMonth() {
-        return this.currentMonth === this.getRealCurrentMonth();
-    },
-    
-    previousMonth() {
-        const [year, month] = this.currentMonth.split('-').map(Number);
-        const date = new Date(year, month - 1, 1);
-        date.setMonth(date.getMonth() - 1);
-        this.currentMonth = this.formatMonthKey(date);
-        this.saveCurrentMonth();
-        return this.currentMonth;
-    },
-    
-    nextMonth() {
-        const [year, month] = this.currentMonth.split('-').map(Number);
-        const date = new Date(year, month - 1, 1);
-        date.setMonth(date.getMonth() + 1);
-        this.currentMonth = this.formatMonthKey(date);
-        this.saveCurrentMonth();
-        return this.currentMonth;
-    },
-    
-    goToCurrent() {
-        this.currentMonth = this.getRealCurrentMonth();
-        this.saveCurrentMonth();
-        return this.currentMonth;
-    },
-    
-    getDisplayName(monthKey) {
-        const [year, month] = monthKey.split('-').map(Number);
-        const date = new Date(year, month - 1, 1);
-        const monthName = date.toLocaleString('default', { month: 'long' });
-        return `${monthName} ${year}`;
+    if (!transactionForm || !transactionsListEl || !searchFilter || !dateInput) {
+        console.error("Aborting: Essential form elements are missing.");
+        return;
     }
-};
 
-const TransactionData = {
-    getAllData() {
-        const data = localStorage.getItem('transactionData');
-        return data ? JSON.parse(data) : {};
-    },
-    
-    getMonthTransactions(monthKey) {
-        const allData = this.getAllData();
-        return allData[monthKey] || [];
-    },
-    
-    saveMonthTransactions(monthKey, transactions) {
-        const allData = this.getAllData();
-        allData[monthKey] = transactions;
-        localStorage.setItem('transactionData', JSON.stringify(allData));
-    },
-    
-    getAllPeople() {
-        const allData = this.getAllData();
-        const people = new Set();
-        Object.values(allData).forEach(monthTransactions => {
-            monthTransactions.forEach(transaction => {
-                if (transaction.person) {
-                    people.add(transaction.person);
-                }
-                if (transaction.splits) {
-                    transaction.splits.forEach(split => {
-                        if (split.person) {
-                            people.add(split.person);
-                        }
-                    });
-                }
+    let transactions = [];
+    let allCategories = [];
+
+    // --- DATA LOADING & SETUP ---
+    const loadPageData = async () => {
+        if (!MonthNavigation.currentMonth) return;
+        
+        const today = new Date();
+        dateInput.value = today.toISOString().slice(0, 10);
+
+        await loadCategories();
+        await populateAccountsDropdowns();
+        await loadTransactions();
+    };
+
+    // --- EVENT LISTENERS (Attached once) ---
+    if (!window.transactionListenersAttached) {
+        window.addEventListener('monthChanged', loadPageData);
+
+        typeToggleButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                typeToggleButtons.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                document.getElementById('type').value = btn.dataset.type;
+                populateCategoryDropdown();
             });
         });
-        return Array.from(people).sort();
-    }
-};
 
-// Page elements
-const prevMonthBtn = document.getElementById('prevMonth');
-const nextMonthBtn = document.getElementById('nextMonth');
-const goToCurrentMonthBtn = document.getElementById('goToCurrentMonth');
-const monthDisplayEl = document.getElementById('currentMonthDisplay');
-const transactionForm = document.getElementById('transactionForm');
-const addMultipleBtn = document.getElementById('addMultipleBtn');
-const transactionsListEl = document.getElementById('transactionsList');
-const totalIncomeEl = document.getElementById('totalIncome');
-const totalExpensesEl = document.getElementById('totalExpenses');
-const netAmountEl = document.getElementById('netAmount');
-const splitTransactionCheckbox = document.getElementById('splitTransaction');
-const splitSection = document.getElementById('splitSection');
-const addSplitBtn = document.getElementById('addSplitBtn');
-const splitsList = document.getElementById('splitsList');
-const amountInput = document.getElementById('amount');
-const splitOriginalAmount = document.getElementById('splitOriginalAmount');
-const splitValidation = document.getElementById('splitValidation');
-const personInput = document.getElementById('person');
-const personList = document.getElementById('personList');
-const submitBtn = transactionForm.querySelector('.btn-primary');
-const searchFilter = document.getElementById('searchFilter');
-const tagFilter = document.getElementById('tagFilter');
-const accountFilter = document.getElementById('accountFilter');
-const personFilter = document.getElementById('personFilter');
-const clearFiltersBtn = document.getElementById('clearFiltersBtn');
-const filterResultsText = document.getElementById('filterResultsText');
-const accountSelect = document.getElementById('account');
-const accountFilterSelect = document.getElementById('accountFilter');
-
-let transactions = [];
-let splits = [];
-let filteredTransactions = [];
-
-// --- NEW FUNCTION TO POPULATE ACCOUNTS ---
-async function populateAccountsDropdowns() {
-    try {
-        const { data: accounts, error } = await supabase
-            .from('accounts')
-            .select('name')
-            .order('name', { ascending: true });
-        
-        if (error) throw error;
-
-        // Clear existing options, but keep the placeholder
-        accountSelect.innerHTML = '<option value="">Select account</option>';
-        accountFilterSelect.innerHTML = '<option value="">All Accounts</option>';
-
-        accounts.forEach(account => {
-            const option = `<option value="${account.name}">${account.name}</option>`;
-            accountSelect.innerHTML += option;
-            accountFilterSelect.innerHTML += option;
+        transactionForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const transaction = {
+                user_id: user.id,
+                month_key: MonthNavigation.currentMonth,
+                type: document.getElementById('type').value,
+                merchant: document.getElementById('merchant').value,
+                amount: parseFloat(document.getElementById('amount').value),
+                day: document.getElementById('day').value,
+                category: document.getElementById('category').value,
+                account: document.getElementById('account').value,
+                recurring: document.getElementById('recurring').checked,
+            };
+            
+            try {
+                const { error } = await supabase.from('transactions').insert([transaction]);
+                if (error) throw error;
+                
+                transactionForm.reset();
+                dateInput.value = new Date().toISOString().slice(0, 10);
+                document.querySelector('.toggle-btn[data-type="expense"]').classList.add('active');
+                document.querySelector('.toggle-btn[data-type="income"]').classList.remove('active');
+                
+                await loadTransactions();
+            } catch (err) {
+                console.error('Error adding transaction:', err);
+                alert('Failed to add transaction.');
+            }
         });
 
-    } catch (err) {
-        console.error("Error fetching accounts for dropdown:", err);
+        searchFilter.addEventListener('input', renderTransactions);
+        
+        window.transactionListenersAttached = true;
     }
-}
 
-
-// Update person autocomplete
-function updatePersonList() {
-    const people = TransactionData.getAllPeople();
-    personList.innerHTML = people.map(person => `<option value="${person}">`).join('');
+    // Initial data load for the page
+    await loadPageData();
     
-    // Update person filter dropdown
-    personFilter.innerHTML = '<option value="">All People</option>' + 
-        people.map(person => `<option value="${person}">${person}</option>`).join('');
-}
-
-// Update month display
-function updateMonthDisplay() {
-    monthDisplayEl.textContent = MonthNavigation.getDisplayName(MonthNavigation.currentMonth);
-    
-    if (MonthNavigation.isViewingCurrentMonth()) {
-        goToCurrentMonthBtn.classList.add('hidden');
-    } else {
-        goToCurrentMonthBtn.classList.remove('hidden');
-    }
-}
-
-// Toggle split section
-splitTransactionCheckbox.addEventListener('change', function() {
-    if (this.checked) {
-        splitSection.style.display = 'block';
-        if (splits.length === 0) {
-            addSplit();
-            addSplit();
+    // --- FUNCTION DEFINITIONS ---
+    async function loadTransactions() {
+        if (!MonthNavigation.currentMonth) return;
+        try {
+            const { data, error } = await supabase.from('transactions')
+                .select('*')
+                .eq('user_id', user.id)
+                .eq('month_key', MonthNavigation.currentMonth)
+                .order('day', { ascending: false });
+            if (error) throw error;
+            transactions = data || [];
+            renderTransactions();
+        } catch (err) {
+            console.error('Error loading transactions:', err);
         }
-    } else {
-        splitSection.style.display = 'none';
-        splits = [];
-        splitsList.innerHTML = '';
     }
-});
-
-// Update split original amount
-amountInput.addEventListener('input', function() {
-    splitOriginalAmount.textContent = this.value || '0.00';
-    validateSplits();
-});
-
-// Add split
-function addSplit() {
-    const splitId = Date.now() + Math.random();
-    const splitItem = document.createElement('div');
-    splitItem.className = 'split-item';
-    splitItem.dataset.splitId = splitId;
     
-    splitItem.innerHTML = `
-        <input type="text" placeholder="Category" class="split-category" required>
-        <input type="number" placeholder="Amount" step="0.01" class="split-amount" required>
-        <input type="text" placeholder="Person (optional)" class="split-person" list="personList">
-        <button type="button" class="btn-remove-split" onclick="removeSplit(${splitId})">×</button>
-    `;
-    
-    splitsList.appendChild(splitItem);
-    
-    const amountField = splitItem.querySelector('.split-amount');
-    amountField.addEventListener('input', validateSplits);
-}
-
-addSplitBtn.addEventListener('click', addSplit);
-
-// Remove split
-function removeSplit(splitId) {
-    const splitItem = document.querySelector(`[data-split-id="${splitId}"]`);
-    if (splitItem) {
-        splitItem.remove();
-        validateSplits();
-    }
-}
-
-// Validate splits
-function validateSplits() {
-    if (!splitTransactionCheckbox.checked) return true;
-    
-    const totalAmount = parseFloat(amountInput.value) || 0;
-    const splitItems = document.querySelectorAll('.split-item');
-    let splitTotal = 0;
-    
-    splitItems.forEach(item => {
-        const amount = parseFloat(item.querySelector('.split-amount').value) || 0;
-        splitTotal += amount;
-    });
-    
-    const difference = Math.abs(totalAmount - splitTotal);
-    
-    if (difference < 0.01) {
-        splitValidation.textContent = '✓ Splits add up correctly';
-        splitValidation.className = 'split-validation valid';
-        submitBtn.disabled = false;
-        return true;
-    } else {
-        const remaining = totalAmount - splitTotal;
-        splitValidation.textContent = `⚠ Remaining: $${remaining.toFixed(2)}`;
-        splitValidation.className = 'split-validation invalid';
-        submitBtn.disabled = true;
-        return false;
-    }
-}
-
-// Load transactions for current month
-function loadTransactions() {
-    transactions = TransactionData.getMonthTransactions(MonthNavigation.currentMonth);
-    applyFilters();
-    updateSummary();
-    updatePersonList();
-}
-
-// Apply filters
-function applyFilters() {
-    const searchTerm = searchFilter.value.toLowerCase();
-    const selectedTag = tagFilter.value;
-    const selectedAccount = accountFilter.value;
-    const selectedPerson = personFilter.value;
-    
-    filteredTransactions = transactions.filter(transaction => {
-        // Search filter
-        const matchesSearch = !searchTerm || 
-            transaction.merchant.toLowerCase().includes(searchTerm);
-        
-        // Tag filter
-        const matchesTag = !selectedTag || transaction.tag === selectedTag;
-        
-        // Account filter
-        const matchesAccount = !selectedAccount || transaction.account === selectedAccount;
-        
-        // Person filter (check both main person and split persons)
-        let matchesPerson = !selectedPerson || transaction.person === selectedPerson;
-        if (!matchesPerson && transaction.splits) {
-            matchesPerson = transaction.splits.some(split => split.person === selectedPerson);
+    async function loadCategories() {
+        try {
+            const budgetData = await BudgetData.getMonthData(MonthNavigation.currentMonth);
+            const expenseCategories = budgetData.expenses ? budgetData.expenses.map(exp => exp.name).filter(name => name && name.trim()) : [];
+            const defaultCategories = ['Food', 'Transport', 'Entertainment', 'Bills', 'Shopping', 'Other'];
+            allCategories = [...new Set([...expenseCategories, ...defaultCategories])];
+            populateCategoryDropdown();
+        } catch (err) {
+            console.error('Error loading categories:', err);
         }
-        
-        return matchesSearch && matchesTag && matchesAccount && matchesPerson;
-    });
-    
-    renderTransactions();
-    updateFilterResults();
-}
-
-// Update filter results text
-function updateFilterResults() {
-    const total = transactions.length;
-    const filtered = filteredTransactions.length;
-    
-    if (filtered === total) {
-        filterResultsText.textContent = `Showing all ${total} transaction${total !== 1 ? 's' : ''}`;
-    } else {
-        filterResultsText.textContent = `Showing ${filtered} of ${total} transaction${total !== 1 ? 's' : ''}`;
     }
-}
-
-// Clear all filters
-clearFiltersBtn.addEventListener('click', function() {
-    searchFilter.value = '';
-    tagFilter.value = '';
-    accountFilter.value = '';
-    personFilter.value = '';
-    applyFilters();
-});
-
-// Add filter event listeners
-searchFilter.addEventListener('input', applyFilters);
-tagFilter.addEventListener('change', applyFilters);
-accountFilter.addEventListener('change', applyFilters);
-personFilter.addEventListener('change', applyFilters);
-
-// Render transactions list
-function renderTransactions() {
-    if (filteredTransactions.length === 0) {
-        if (transactions.length === 0) {
-            transactionsListEl.innerHTML = '<p class="empty-state">No transactions yet. Add your first transaction above!</p>';
+    
+    function populateCategoryDropdown() {
+        const categorySelect = document.getElementById('category');
+        const currentType = document.getElementById('type').value;
+        categorySelect.innerHTML = '<option value="">Select a category</option>';
+        
+        if (currentType === 'expense') {
+            allCategories.forEach(category => {
+                categorySelect.innerHTML += `<option value="${category}">${category}</option>`;
+            });
         } else {
-            transactionsListEl.innerHTML = '<p class="empty-state">No transactions match your filters.</p>';
+            const incomeCategories = ['Salary', 'Freelance', 'Investment', 'Gift', 'Other'];
+            incomeCategories.forEach(category => {
+                categorySelect.innerHTML += `<option value="${category}">${category}</option>`;
+            });
         }
-        return;
     }
     
-    const sortedTransactions = [...filteredTransactions].sort((a, b) => a.day - b.day);
+    async function populateAccountsDropdowns() {
+        try {
+            const { data: accounts, error } = await supabase.from('accounts').select('name').eq('user_id', user.id);
+            if (error) throw error;
+            const accountSelect = document.getElementById('account');
+            accountSelect.innerHTML = '<option value="">Select an account</option>';
+            if (accounts && accounts.length > 0) {
+                accounts.forEach(account => {
+                    accountSelect.innerHTML += `<option value="${account.name}">${account.name}</option>`;
+                });
+            }
+        } catch (err) {
+            console.error('Error loading accounts:', err);
+        }
+    }
     
-    transactionsListEl.innerHTML = sortedTransactions.map((transaction, index) => {
-        const splitIndicator = transaction.splits ? 
-            `<span class="transaction-split-indicator">📊 Split (${transaction.splits.length})</span>` : '';
+    function renderTransactions() {
+        const searchTerm = searchFilter.value.toLowerCase();
+        const filteredTransactions = transactions.filter(t => t.merchant.toLowerCase().includes(searchTerm) || t.category.toLowerCase().includes(searchTerm));
         
-        const personBadge = transaction.person ? 
-            `<span class="transaction-person">👤 ${transaction.person}</span>` : '';
+        if (filteredTransactions.length === 0) {
+            transactionsListEl.innerHTML = '<li class="list-item-empty"><p>No transactions found</p></li>';
+            return;
+        }
         
-        const splitDetails = transaction.splits ? `
-            <div class="split-details-list">
-                ${transaction.splits.map(split => `
-                    <div class="split-details-item">
-                        <span>${split.category}${split.person ? ` (${split.person})` : ''}</span>
-                        <span>$${split.amount.toFixed(2)}</span>
+        transactionsListEl.innerHTML = filteredTransactions.map(t => {
+            // Correctly handle UTC date for display
+            const [year, month, day] = t.day.split('-').map(Number);
+            const date = new Date(Date.UTC(year, month - 1, day));
+            const formattedDate = date.toLocaleDateString(undefined, { timeZone: 'UTC' });
+
+            return `
+                <li class="transaction-item" data-id="${t.id}">
+                    <div class="transaction-icon ${t.type}">
+                        <i data-lucide="${t.type === 'income' ? 'arrow-up-circle' : 'arrow-down-circle'}"></i>
                     </div>
-                `).join('')}
-            </div>
-        ` : '';
-        
-        return `
-            <div class="transaction-item ${transaction.tag === 'income' ? 'income' : 'expense'} ${transaction.splits ? 'split' : ''}">
-                <div class="transaction-day">
-                    <span class="day-number">${transaction.day}</span>
-                    <span class="day-label">Day</span>
-                </div>
-                
-                <div class="transaction-details">
-                    <div class="transaction-merchant">${transaction.merchant}</div>
-                    <div class="transaction-meta">
-                        <span class="transaction-tag">${transaction.tag}</span>
-                        <span>${transaction.account}</span>
-                        ${personBadge}
-                        ${transaction.recurring ? '<span class="transaction-recurring">🔄 Recurring</span>' : ''}
-                        ${splitIndicator}
+                    <div class="transaction-details">
+                        <div class="name">${t.merchant}</div>
+                        <div class="category">${t.category}${t.recurring ? ' • Recurring' : ''}</div>
                     </div>
-                    ${splitDetails}
-                </div>
-                
-                <div class="transaction-amount ${transaction.tag === 'income' ? 'income' : 'expense'}">
-                    $${transaction.amount.toFixed(2)}
-                </div>
-                
-                <button class="btn-delete" onclick="deleteTransaction(${index})" title="Delete transaction">×</button>
-            </div>
-        `;
-    }).join('');
-}
-
-// Update summary totals
-function updateSummary() {
-    let totalIncome = 0;
-    let totalExpenses = 0;
-    
-    transactions.forEach(transaction => {
-        if (transaction.tag === 'income') {
-            totalIncome += transaction.amount;
-        } else {
-            totalExpenses += transaction.amount;
-        }
-    });
-    
-    const net = totalIncome - totalExpenses;
-    
-    totalIncomeEl.textContent = `$${totalIncome.toFixed(2)}`;
-    totalExpensesEl.textContent = `$${totalExpenses.toFixed(2)}`;
-    netAmountEl.textContent = `$${net.toFixed(2)}`;
-}
-
-// Add transaction
-transactionForm.addEventListener('submit', function(e) {
-    e.preventDefault();
-    
-    if (splitTransactionCheckbox.checked && !validateSplits()) {
-        return;
+                    <div class="transaction-info">
+                        <div class="amount ${t.type}">${formatCurrency(t.amount)}</div>
+                        <div class="date">${formattedDate}</div>
+                    </div>
+                    <div class="actions">
+                        <button class="action-btn delete-btn" data-id="${t.id}" title="Delete">
+                            <i data-lucide="trash-2"></i>
+                        </button>
+                    </div>
+                </li>`;
+        }).join('');
+        
+        lucide.createIcons();
+        
+        document.querySelectorAll('.delete-btn').forEach(btn => btn.addEventListener('click', handleDelete));
     }
     
-    const transaction = {
-        merchant: document.getElementById('merchant').value,
-        amount: parseFloat(document.getElementById('amount').value),
-        account: document.getElementById('account').value,
-        day: parseInt(document.getElementById('day').value),
-        tag: document.getElementById('tag').value,
-        person: document.getElementById('person').value || null,
-        recurring: document.getElementById('recurring').checked,
-        id: Date.now()
-    };
-    
-    if (splitTransactionCheckbox.checked) {
-        const splitItems = document.querySelectorAll('.split-item');
-        transaction.splits = Array.from(splitItems).map(item => ({
-            category: item.querySelector('.split-category').value,
-            amount: parseFloat(item.querySelector('.split-amount').value),
-            person: item.querySelector('.split-person').value || null
-        }));
-    }
-    
-    transactions.push(transaction);
-    TransactionData.saveMonthTransactions(MonthNavigation.currentMonth, transactions);
-    
-    applyFilters();
-    updateSummary();
-    updatePersonList();
-    
-    // Show "Add Another" button
-    addMultipleBtn.style.display = 'block';
-    
-    // Reset form
-    transactionForm.reset();
-    splitSection.style.display = 'none';
-    splits = [];
-    splitsList.innerHTML = '';
-    splitValidation.textContent = '';
-    submitBtn.disabled = false;
-    
-    // Focus on merchant field for quick entry
-    document.getElementById('merchant').focus();
-});
-
-// Add multiple transactions
-addMultipleBtn.addEventListener('click', function() {
-    document.getElementById('merchant').focus();
-});
-
-// Delete transaction
-function deleteTransaction(index) {
-    if (confirm('Delete this transaction?')) {
-        // Find the actual transaction in the full list
-        const transactionToDelete = filteredTransactions[index];
-        const actualIndex = transactions.findIndex(t => t.id === transactionToDelete.id);
+    async function handleDelete(e) {
+        const id = e.currentTarget.dataset.id;
+        if (!confirm('Delete this transaction?')) return;
         
-        transactions.splice(actualIndex, 1);
-        TransactionData.saveMonthTransactions(MonthNavigation.currentMonth, transactions);
-        applyFilters();
-        updateSummary();
-        
-        if (transactions.length === 0) {
-            addMultipleBtn.style.display = 'none';
+        try {
+            const { error } = await supabase.from('transactions').delete().eq('id', id);
+            if (error) throw error;
+            await loadTransactions();
+        } catch (err) {
+            console.error('Error deleting transaction:', err);
         }
     }
+    
+    function formatCurrency(amount) {
+        return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount || 0);
+    }
 }
 
-// Month navigation
-prevMonthBtn.addEventListener('click', () => {
-    MonthNavigation.previousMonth();
-    updateMonthDisplay();
-    loadTransactions();
-    addMultipleBtn.style.display = 'none';
+// --- MAIN EVENT LISTENERS FOR PAGE LIFECYCLE ---
+window.addEventListener('monthNavReady', setupTransactionsPage);
+window.addEventListener('pageshow', (event) => {
+    if (event.persisted) {
+        window.transactionListenersAttached = false; // Reset flag
+        setupTransactionsPage();
+    }
 });
-
-nextMonthBtn.addEventListener('click', () => {
-    MonthNavigation.nextMonth();
-    updateMonthDisplay();
-    loadTransactions();
-    addMultipleBtn.style.display = 'none';
-});
-
-goToCurrentMonthBtn.addEventListener('click', () => {
-    MonthNavigation.goToCurrent();
-    updateMonthDisplay();
-    loadTransactions();
-    addMultipleBtn.style.display = 'none';
-});
-
-// --- UPDATED INITIALIZATION ---
-MonthNavigation.init();
-updateMonthDisplay();
-loadTransactions();
-populateAccountsDropdowns(); // Load accounts from Supabase

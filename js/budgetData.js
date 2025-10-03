@@ -1,30 +1,20 @@
-// At the very top of js/dashboard.js
-document.addEventListener('DOMContentLoaded', async () => {
-    const user = await requireAuth();
-    if (!user) return; // Stop executing if not authenticated
-
-    // The rest of your dashboard code...
-    MonthNavigation.init();
-    loadDashboardData();
-});
+// js/budgetData.js
 
 const BudgetData = {
     // Get data for a specific month from Supabase
     async getMonthData(monthKey) {
         try {
-            // --- THIS IS THE CRITICAL FIX ---
-            // First, get the current user to know who we're fetching data for.
             const { data: { user } } = await supabase.auth.getUser();
-            if (!user) return { income: 0, expenses: [] }; // If no user, return empty budget
+            if (!user) return { income: 0, expenses: [] };
 
             const { data, error } = await supabase
                 .from('budgets')
                 .select('data')
-                .eq('user_id', user.id) // Specify the user
-                .eq('month_key', monthKey) // And the month
+                .eq('user_id', user.id)
+                .eq('month_key', monthKey)
                 .single(); 
 
-            if (error && error.code !== 'PGRST116') { // PGRST116 = "No rows found" which is okay
+            if (error && error.code !== 'PGRST116') { // PGRST116 = "No rows found"
                 throw error;
             }
 

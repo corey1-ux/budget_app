@@ -3,172 +3,105 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Transactions - Budget App</title>
+    <title>Transactions - BudgetFlow</title>
+
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+
     <link rel="stylesheet" href="css/main.css">
     <link rel="stylesheet" href="css/navbar.css">
+    <link rel="stylesheet" href="css/monthNav.css">
     <link rel="stylesheet" href="css/transactions.css">
-    <link rel="stylesheet" href="css/budget.css">
     <link rel="stylesheet" href="css/settingsModal.css">
 </head>
 <body>
     <main class="container">
-        <!-- Add Transaction Form -->
-        <div class="transaction-form-card">
-            <h3>Add Transaction</h3>
-            <form id="transactionForm">
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="merchant">Merchant/Source</label>
-                        <input type="text" id="merchant" placeholder="e.g., Walmart, Salary" required>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="amount">Amount</label>
-                        <div class="input-with-prefix">
-                            <span class="prefix">$</span>
-                            <input type="number" id="amount" placeholder="0.00" step="0.01" required>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                    <label for="account">Account</label>
-                    <select id="account" required>
-                    <option value="">Select account</option>
-                     </select>
-                    </div>
-                    <select id="accountFilter" class="filter-select">
-                    <option value="">All Accounts</option>
-                    </select>
-
-                    <div class="form-group">
-                        <label for="day">Day of Month</label>
-                        <input type="number" id="day" min="1" max="31" placeholder="1-31" required>
-                    </div>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="tag">Tag/Category</label>
-                        <select id="tag" required>
-                            <option value="">Select category</option>
-                            <option value="income">Income</option>
-                            <option value="groceries">Groceries</option>
-                            <option value="dining">Dining Out</option>
-                            <option value="transportation">Transportation</option>
-                            <option value="utilities">Utilities</option>
-                            <option value="entertainment">Entertainment</option>
-                            <option value="healthcare">Healthcare</option>
-                            <option value="shopping">Shopping</option>
-                            <option value="housing">Housing</option>
-                            <option value="other">Other</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="person">Person (Optional)</label>
-                        <input type="text" id="person" placeholder="e.g., John, Sarah" list="personList">
-                        <datalist id="personList"></datalist>
-                    </div>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group checkbox-group">
-                        <label class="checkbox-label">
-                            <input type="checkbox" id="recurring">
-                            <span>Recurring Transaction</span>
-                        </label>
-                    </div>
-                    
-                    <div class="form-group checkbox-group">
-                        <label class="checkbox-label">
-                            <input type="checkbox" id="splitTransaction">
-                            <span>Split Transaction</span>
-                        </label>
-                    </div>
-                </div>
-
-                <!-- Split Transaction Section (Hidden by default) -->
-                <div id="splitSection" class="split-section" style="display: none;">
-                    <div class="split-header">
-                        <h4>Split Details</h4>
-                        <p class="split-info">Original Amount: $<span id="splitOriginalAmount">0.00</span></p>
-                    </div>
-                    <div id="splitsList"></div>
-                    <button type="button" class="btn-add-split" id="addSplitBtn">+ Add Split</button>
-                    <p class="split-validation" id="splitValidation"></p>
-                </div>
-
-                <div class="form-actions">
-                    <button type="submit" class="btn-primary">Add Transaction</button>
-                    <button type="button" class="btn-secondary" id="addMultipleBtn" style="display: none;">
-                        + Add Another
-                    </button>
-                </div>
-            </form>
+        <div class="header">
+            <h1>Transactions</h1>
         </div>
 
-        <!-- Transactions List -->
-        <div class="transactions-list-card">
-            <div class="list-header">
-                <h3>Transactions</h3>
-                <div class="summary">
-                    <span class="summary-item income">Income: <strong id="totalIncome">$0.00</strong></span>
-                    <span class="summary-item expense">Expenses: <strong id="totalExpenses">$0.00</strong></span>
-                    <span class="summary-item net">Net: <strong id="netAmount">$0.00</strong></span>
+        <div class="content-grid">
+            <div class="card form-card">
+                <div class="card-header">
+                    <h3>Add a Transaction</h3>
+                </div>
+                <div class="card-body">
+                    <form id="transactionForm">
+                        <div class="form-group">
+                            <label for="type">Type</label>
+                            <div class="type-toggle">
+                                <button type="button" class="toggle-btn active" data-type="expense">Expense</button>
+                                <button type="button" class="toggle-btn" data-type="income">Income</button>
+                            </div>
+                            <input type="hidden" id="type" value="expense">
+                        </div>
+                        <div class="form-group">
+                            <label for="merchant">Merchant or Source</label>
+                            <input type="text" id="merchant" placeholder="e.g., Amazon, Salary" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="amount">Amount</label>
+                            <div class="amount-input-group">
+                                <span class="currency-symbol">$</span>
+                                <input type="number" id="amount" placeholder="0.00" step="0.01" required>
+                            </div>
+                        </div>
+                         <div class="form-group">
+                            <label for="day">Date</label>
+                            <input type="date" id="day" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="category">Category</label>
+                            <select id="category" required></select>
+                        </div>
+                        <div class="form-group">
+                            <label for="account">Account</label>
+                            <select id="account" required></select>
+                        </div>
+                        <div class="form-group checkbox-group">
+                             <input type="checkbox" id="recurring">
+                             <label for="recurring">Is this a recurring transaction?</label>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Add Transaction</button>
+                    </form>
                 </div>
             </div>
-            
-            <!-- Filter Section -->
-            <div class="filter-section">
-                <div class="filter-controls">
-                    <input type="text" id="searchFilter" placeholder="Search merchant..." class="filter-input">
-                    
-                    <select id="tagFilter" class="filter-select">
-                        <option value="">All Categories</option>
-                        <option value="income">Income</option>
-                        <option value="groceries">Groceries</option>
-                        <option value="dining">Dining Out</option>
-                        <option value="transportation">Transportation</option>
-                        <option value="utilities">Utilities</option>
-                        <option value="entertainment">Entertainment</option>
-                        <option value="healthcare">Healthcare</option>
-                        <option value="shopping">Shopping</option>
-                        <option value="housing">Housing</option>
-                        <option value="other">Other</option>
-                    </select>
-                    
-                    <select id="accountFilter" class="filter-select">
-                        <option value="">All Accounts</option>
-                        <option value="checking">Checking</option>
-                        <option value="savings">Savings</option>
-                        <option value="credit-card">Credit Card</option>
-                        <option value="cash">Cash</option>
-                    </select>
-                    
-                    <select id="personFilter" class="filter-select">
-                        <option value="">All People</option>
-                    </select>
-                    
-                    <button class="btn-clear-filters" id="clearFiltersBtn">Clear Filters</button>
+
+            <div class="card list-card">
+                <div class="card-header">
+                    <h3>This Month's Transactions</h3>
+                    <div class="filter-controls">
+                        <input type="text" id="searchFilter" placeholder="Search...">
+                    </div>
                 </div>
-                <div class="filter-results">
-                    <span id="filterResultsText">Showing all transactions</span>
+                <div class="card-body">
+                    <ul class="transaction-list" id="transactionsList">
+                        <li class="list-item-empty"><p>No transactions for this month yet.</p></li>
+                    </ul>
                 </div>
-            </div>
-            
-            <div id="transactionsList" class="transactions-container">
-                <p class="empty-state">No transactions yet. Add your first transaction above!</p>
             </div>
         </div>
     </main>
-</body>
-<script src="js/settingsModal.js"></script>
-<script src="js/navbar.js"></script>
-<script src="js/supabaseClient.js"></script>
-<script src="js/monthNavigation.js"></script>
-<script src="js/transactions.js"></script>
 
+    <div class="modal-overlay" id="editModal">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h2>Edit Transaction</h2>
+                <button class="modal-close" id="closeEditModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="editForm">
+                    <input type="hidden" id="edit-id">
+                    </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/supabaseClient.js"></script>
+    <script src="js/navbar.js"></script>
+    <script src="js/settingsModal.js"></script>
+    <script src="js/monthNavigation.js"></script>
+    <script src="js/budgetData.js"></script> 
+    <script src="js/transactions.js"></script>
+</body>
 </html>
