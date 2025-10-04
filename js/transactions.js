@@ -272,7 +272,8 @@ async function populateAccountsDropdowns() {
     try {
         const { data, error } = await supabase
             .from('accounts')
-            .select('name')
+            .select('name, type')
+            .eq('type', 'asset') // Only show asset accounts
             .order('name', { ascending: true });
         
         if (error) throw error;
@@ -280,14 +281,19 @@ async function populateAccountsDropdowns() {
         const accountSelect = document.getElementById('account');
         if (!accountSelect) return;
         
+        if (!data || data.length === 0) {
+            accountSelect.innerHTML = '<option value="">No asset accounts available</option>';
+            return;
+        }
+        
         accountSelect.innerHTML = '<option value="">Select Account</option>' +
-            (data || []).map(acc => `<option value="${acc.name}">${acc.name}</option>`).join('');
+            data.map(acc => `<option value="${acc.name}">${acc.name}</option>`).join('');
         
     } catch (err) {
         console.error("Error fetching accounts:", err);
         const accountSelect = document.getElementById('account');
         if (accountSelect) {
-            accountSelect.innerHTML = '<option value="">Select Account</option>';
+            accountSelect.innerHTML = '<option value="">Error loading accounts</option>';
         }
     }
 }
