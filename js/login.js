@@ -2,6 +2,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const signInForm = document.getElementById('signInForm');
     const signUpForm = document.getElementById('signUpForm');
     const loginModal = document.getElementById('loginModal'); // Get the modal element
+    const closeLoginModalBtn = document.getElementById('closeLoginModal'); // --- THIS IS THE FIX ---
 
     // Function to close the modal
     const closeModal = () => {
@@ -9,6 +10,13 @@ document.addEventListener('DOMContentLoaded', () => {
             loginModal.classList.remove('active');
         }
     };
+
+    // --- THIS IS THE FIX ---
+    // Handle Close Button Click
+    if (closeLoginModalBtn) {
+        closeLoginModalBtn.addEventListener('click', closeModal);
+    }
+
 
     // Handle Sign Up
     if (signUpForm) {
