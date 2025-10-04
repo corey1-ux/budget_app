@@ -3,66 +3,107 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Budget - Budget App</title>
+    <title>Budget - BudgetFlow</title>
+    
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link rel="stylesheet" href="css/budget.css">
-    <link rel="stylesheet" href="css/settingsModal.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <link rel="stylesheet" href="css/main.css">
     <link rel="stylesheet" href="css/navbar.css">
     <link rel="stylesheet" href="css/monthNav.css">
+    <link rel="stylesheet" href="css/budget.css">
+    <link rel="stylesheet" href="css/settingsModal.css">
 </head>
 <body>
     <main class="container">
-        <h2>Monthly Budget</h2>
-        
-        <div class="budget-card">
-            <div class="income-section">
-                <label for="income">Monthly Income</label>
-                <div class="input-wrapper">
-                    <span class="currency">$</span>
-                    <input 
-                        type="number" 
-                        id="income" 
-                        placeholder="0.00" 
-                        step="0.01"
-                        min="0"
-                    >
+        <div class="header">
+            <h1>Monthly Budget</h1>
+        </div>
+
+        <div class="budget-grid">
+            <!-- Income Card -->
+            <div class="card income-card">
+                <div class="card-header">
+                    <div class="card-icon">
+                        <i data-lucide="arrow-down-circle"></i>
+                    </div>
+                    <h3>Monthly Income</h3>
+                </div>
+                <div class="card-body">
+                    <div class="income-input-wrapper">
+                        <span class="currency-symbol">$</span>
+                        <input 
+                            type="number" 
+                            id="income" 
+                            placeholder="0.00" 
+                            step="0.01"
+                            min="0"
+                            class="income-input"
+                        >
+                    </div>
                 </div>
             </div>
-            
-            <div class="expenses-section">
-                <h3>Expenses</h3>
+
+            <!-- Summary Card -->
+            <div class="card summary-card">
+                <div class="card-header">
+                    <div class="card-icon">
+                        <i data-lucide="calculator"></i>
+                    </div>
+                    <h3>Budget Summary</h3>
+                </div>
+                <div class="card-body">
+                    <div class="summary-item">
+                        <span class="summary-label">Total Income</span>
+                        <span class="summary-value" id="totalIncome">$0.00</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Total Expenses</span>
+                        <span class="summary-value" id="totalExpenses">$0.00</span>
+                    </div>
+                    <div class="summary-divider"></div>
+                    <div class="summary-item summary-remaining">
+                        <span class="summary-label">Remaining</span>
+                        <span class="summary-value" id="remaining">$0.00</span>
+                    </div>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar-fill" id="budgetProgressBar"></div>
+                    </div>
+                    <div class="progress-label" id="progressLabel">0% of budget used</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Expenses Card -->
+        <div class="card expenses-card">
+            <div class="card-header">
+                <div class="card-icon">
+                    <i data-lucide="receipt"></i>
+                </div>
+                <h3>Budget Categories</h3>
+                <button class="btn-add-expense" id="addExpenseBtn">
+                    <i data-lucide="plus"></i>
+                    <span>Add Category</span>
+                </button>
+            </div>
+            <div class="card-body">
                 <div id="expensesList" class="expenses-list">
                     <!-- Expense items will be added here -->
                 </div>
-                
-                <button class="btn-add" id="addExpenseBtn">
-                    <span class="plus-icon">+</span>
-                    Add Expense
-                </button>
-            </div>
-            
-            <div class="summary-section">
-                <div class="summary-row">
-                    <span class="summary-label">Total Income:</span>
-                    <span class="summary-value" id="totalIncome">$0.00</span>
-                </div>
-                <div class="summary-row">
-                    <span class="summary-label">Total Expenses:</span>
-                    <span class="summary-value" id="totalExpenses">$0.00</span>
-                </div>
-                <div class="summary-row summary-total">
-                    <span class="summary-label">Remaining:</span>
-                    <span class="summary-value" id="remaining">$0.00</span>
+                <div class="empty-state" id="emptyState">
+                    <i data-lucide="inbox"></i>
+                    <p>No budget categories yet</p>
+                    <span>Click "Add Category" to create your first budget item</span>
                 </div>
             </div>
         </div>
     </main>
-    <script src="js/settingsModal.js"></script>
-    <script src="js/navbar.js"></script>
+
     <script src="js/supabaseClient.js"></script>
-    <script src="js/monthNavigation.js"></script> 
+    <script src="js/navbar.js"></script>
+    <script src="js/settingsModal.js"></script>
+    <script src="js/monthNavigation.js"></script>
     <script src="js/budgetData.js"></script>
     <script src="js/budget.js"></script>
-    
 </body>
 </html>
