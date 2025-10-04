@@ -5,6 +5,7 @@
 // ==========================================
 
 let isInitialized = false;
+let allTransactions = {};  // Cache transactions by account name
 
 // ==========================================
 // INITIALIZATION
@@ -91,7 +92,6 @@ function showModal(account = null) {
         modalTitle.textContent = 'Edit Account';
         document.getElementById('accountId').value = account.id;
         document.getElementById('accountName').value = account.name;
-        // Just set the numeric value, not formatted
         document.getElementById('accountBalance').value = parseFloat(account.balance);
         document.getElementById('accountType').value = account.type;
         if (deleteAccountBtn) deleteAccountBtn.style.display = 'flex';
@@ -227,8 +227,8 @@ async function fetchAndRenderAccounts() {
         if (emptyState) emptyState.classList.remove('visible');
 
         // Render accounts
-        accounts.forEach(account => {
-            const accountItem = createAccountItem(account);
+        for (const account of accounts) {
+            const accountItem = await createAccountItem(account);
             accountsList.appendChild(accountItem);
 
             // Calculate totals
@@ -238,7 +238,7 @@ async function fetchAndRenderAccounts() {
             } else {
                 totalDebts += balance;
             }
-        });
+        }
 
         // Update summary
         if (totalAssetsEl) totalAssetsEl.textContent = formatCurrency(totalAssets);
@@ -256,35 +256,241 @@ async function fetchAndRenderAccounts() {
     }
 }
 
-function createAccountItem(account) {
+async function createAccountItem(account) {
     const accountItem = document.createElement('div');
     accountItem.className = `account-item ${account.type}`;
     
     const balance = parseFloat(account.balance) || 0;
-    const balanceClass = balance >= 0 ? 'positive' : 'negative';
+    // Balance color matches account type (asset = green, debt = red)
+    const balanceClass = account.type === 'asset' ? 'asset-balance' : 'debt-balance';
     
     // Choose icon based on type
     const icon = account.type === 'asset' ? 'wallet' : 'credit-card';
     
     accountItem.innerHTML = `
-        <div class="account-info">
-            <div class="account-icon ${account.type}">
-                <i data-lucide="${icon}"></i>
+        <div class="account-main">
+            <div class="account-main-left">
+                <i data-lucide="chevron-right" class="account-expand-icon"></i>
+                <div class="account-icon ${account.type}">
+                    <i data-lucide="${icon}"></i>
+                </div>
+                <div class="account-details">
+                    <h4>${account.name}</h4>
+                    <p>${account.type}</p>
+                </div>
             </div>
-            <div class="account-details">
-                <h4>${account.name}</h4>
-                <p>${account.type}</p>
+            <div class="account-balance-section">
+                <div class="account-balance ${balanceClass}">
+                    ${formatCurrency(balance)}
+                </div>
+                <div class="account-actions">
+                    <button class="btn-account-action btn-more" title="More options">
+                        <i data-lucide="more-vertical"></i>
+                    </button>
+                    <div class="account-dropdown">
+                        <button class="account-dropdown-item" data-action="edit">
+                            <i data-lucide="edit-2"></i>
+                            <span>Edit Account</span>
+                        </button>
+                        <button class="account-dropdown-item" data-action="view">
+                            <i data-lucide="eye"></i>
+                            <span>View Transactions</span>
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
-        <div class="account-balance ${balanceClass}">
-            ${formatCurrency(balance)}
+        <div class="account-transactions">
+            <div class="account-transactions-header">
+                <h4>Transactions</h4>
+            </div>
+            <ul class="account-transactions-list" id="transactions-${account.id}">
+                <li class="no-transactions">Loading...</li>
+            </ul>
         </div>
     `;
     
-    // Click to edit
-    accountItem.addEventListener('click', () => showModal(account));
+    const accountMain = accountItem.querySelector('.account-main');
+    const moreBtn = accountItem.querySelector('.btn-more');
+    const dropdown = accountItem.querySelector('.account-dropdown');
+    const dropdownItems = accountItem.querySelectorAll('.account-dropdown-item');
+    
+    // Toggle dropdown on three dots click
+    moreBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        
+        // Close all other dropdowns
+        document.querySelectorAll('.account-dropdown.visible').forEach(d => {
+            if (d !== dropdown) {
+                d.classList.remove('visible');
+                d.previousElementSibling.classList.remove('active');
+            }
+        });
+        
+        // Toggle this dropdown
+        dropdown.classList.toggle('visible');
+        moreBtn.classList.toggle('active');
+    });
+    
+    // Handle dropdown item clicks
+    dropdownItems.forEach(item => {
+        item.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            const action = item.dataset.action;
+            
+            // Close dropdown
+            dropdown.classList.remove('visible');
+            moreBtn.classList.remove('active');
+            
+            if (action === 'edit') {
+                showModal(account);
+            } else if (action === 'view') {
+                // Expand to view transactions
+                const isExpanded = accountItem.classList.contains('expanded');
+                
+                // Collapse all other accounts
+                document.querySelectorAll('.account-item.expanded').forEach(item => {
+                    if (item !== accountItem) {
+                        item.classList.remove('expanded');
+                    }
+                });
+                
+                // Expand this account if not already expanded
+                if (!isExpanded) {
+                    accountItem.classList.add('expanded');
+                    await loadAccountTransactions(account);
+                }
+                
+                lucide.createIcons();
+            }
+        });
+    });
+    
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!accountItem.contains(e.target)) {
+            dropdown.classList.remove('visible');
+            moreBtn.classList.remove('active');
+        }
+    });
+    
+    // Toggle expand/collapse on main click
+    accountMain.addEventListener('click', async (e) => {
+        // Don't toggle if clicking actions area
+        if (e.target.closest('.account-actions')) {
+            return;
+        }
+        
+        const isExpanded = accountItem.classList.contains('expanded');
+        
+        // Collapse all other accounts
+        document.querySelectorAll('.account-item.expanded').forEach(item => {
+            if (item !== accountItem) {
+                item.classList.remove('expanded');
+            }
+        });
+        
+        // Toggle this account
+        accountItem.classList.toggle('expanded');
+        
+        // Load transactions if expanding
+        if (!isExpanded) {
+            await loadAccountTransactions(account);
+        }
+        
+        lucide.createIcons();
+    });
     
     return accountItem;
+}
+
+async function loadAccountTransactions(account) {
+    const transactionsListEl = document.getElementById(`transactions-${account.id}`);
+    
+    if (!transactionsListEl) return;
+    
+    try {
+        // Check cache first
+        if (!allTransactions[account.name]) {
+            const { data, error } = await supabase
+                .from('transactions')
+                .select('*')
+                .eq('account', account.name)
+                .order('day', { ascending: false });
+            
+            if (error) throw error;
+            
+            allTransactions[account.name] = data || [];
+        }
+        
+        const transactions = allTransactions[account.name];
+        
+        // Render transactions
+        if (transactions.length === 0) {
+            transactionsListEl.innerHTML = '<li class="no-transactions">No transactions yet</li>';
+            return;
+        }
+        
+        transactionsListEl.innerHTML = transactions.map(t => {
+            const [year, month, day] = t.day.split('-').map(Number);
+            const date = new Date(Date.UTC(year, month - 1, day));
+            const formattedDate = date.toLocaleDateString(undefined, { 
+                timeZone: 'UTC',
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric'
+            });
+            
+            const type = t.type === 'income' ? 'income' : 'expense';
+            const icon = type === 'income' ? 'arrow-down-circle' : 'arrow-up-circle';
+            
+            return `
+                <li class="account-transaction-item" data-transaction-id="${t.id}">
+                    <div class="transaction-left">
+                        <div class="transaction-type-icon ${type}">
+                            <i data-lucide="${icon}"></i>
+                        </div>
+                        <div class="transaction-details-text">
+                            <div class="transaction-merchant">${t.merchant}</div>
+                            <div class="transaction-category">${t.category || 'Uncategorized'}</div>
+                        </div>
+                    </div>
+                    <div class="transaction-right">
+                        <div class="transaction-amount ${type}">${formatCurrency(t.amount)}</div>
+                        <div class="transaction-date">${formattedDate}</div>
+                    </div>
+                </li>
+            `;
+        }).join('');
+        
+        // Add click handlers to transactions
+        const transactionItems = transactionsListEl.querySelectorAll('.account-transaction-item');
+        transactionItems.forEach(item => {
+            item.addEventListener('click', () => {
+                const transactionId = item.dataset.transactionId;
+                const transaction = transactions.find(t => t.id === transactionId);
+                if (transaction) {
+                    openTransactionEditModal(transaction, account);
+                }
+            });
+        });
+        
+        lucide.createIcons();
+        
+    } catch (err) {
+        console.error('Error loading transactions:', err);
+        transactionsListEl.innerHTML = '<li class="no-transactions">Failed to load transactions</li>';
+    }
+}
+
+// Add this new function for editing transactions
+function openTransactionEditModal(transaction, account) {
+    // For now, just redirect to transactions page with a plan to add edit modal later
+    // You could also build an edit modal here similar to the account modal
+    alert(`Edit transaction: ${transaction.merchant}\nAmount: ${formatCurrency(transaction.amount)}\n\nTransaction editing will open a modal here. For now, please use the Transactions page to edit.`);
+    
+    // Optional: Navigate to transactions page
+    // window.location.href = 'transactions.html';
 }
 
 // ==========================================

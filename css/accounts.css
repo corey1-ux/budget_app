@@ -167,110 +167,45 @@ body {
     color: var(--primary);
 }
 
-/* Accounts List */
-.accounts-list {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
+/* Accounts Section */
+.accounts-section {
+    margin-top: 1.5rem;
 }
 
-.account-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 1.25rem;
-    background: var(--bg-secondary);
-    border: 2px solid var(--border);
-    border-left: 5px solid;
-    border-radius: 12px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    animation: slide-in 0.3s ease-out;
-}
-
-@keyframes slide-in {
-    from {
-        opacity: 0;
-        transform: translateX(-20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateX(0);
-    }
-}
-
-.account-item:hover {
-    border-color: rgba(249, 115, 22, 0.3);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-}
-
-.account-item.asset {
-    border-left-color: var(--success);
-}
-
-.account-item.debt {
-    border-left-color: var(--danger);
-}
-
-.account-info {
+.accounts-header {
     display: flex;
     align-items: center;
-    gap: 1rem;
-    flex: 1;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+    padding: 0 0.25rem;
 }
 
-.account-icon {
-    width: 48px;
-    height: 48px;
-    border-radius: 12px;
+.section-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, rgba(249, 115, 22, 0.1), rgba(234, 88, 12, 0.08));
     display: flex;
     align-items: center;
     justify-content: center;
-    flex-shrink: 0;
+    color: var(--primary);
 }
 
-.account-icon.asset {
-    background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(22, 163, 74, 0.08));
-    color: var(--success);
+.section-icon svg {
+    width: 18px;
+    height: 18px;
 }
 
-.account-icon.debt {
-    background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(220, 38, 38, 0.08));
-    color: var(--danger);
-}
-
-.account-icon svg {
-    width: 24px;
-    height: 24px;
-}
-
-.account-details h4 {
-    font-size: 1.125rem;
-    font-weight: 600;
-    color: var(--text-primary);
-    margin: 0 0 0.25rem 0;
-}
-
-.account-details p {
-    font-size: 0.875rem;
-    color: var(--text-muted);
-    margin: 0;
-    text-transform: capitalize;
-}
-
-.account-balance {
-    font-size: 1.5rem;
+.accounts-header h3 {
+    font-size: 1.25rem;
     font-weight: 700;
     color: var(--text-primary);
+    margin: 0;
 }
 
-.account-balance.positive {
-    color: var(--success);
-}
-
-.account-balance.negative {
-    color: var(--danger);
+.accounts-list {
+    display: flex;
+    flex-direction: column;
 }
 
 /* Empty State */
@@ -279,9 +214,12 @@ body {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 3rem 1rem;
+    padding: 4rem 1rem;
     text-align: center;
     color: var(--text-muted);
+    background: var(--bg-primary);
+    border: 2px dashed var(--border);
+    border-radius: 16px;
 }
 
 .empty-state.visible {
@@ -335,7 +273,7 @@ body {
     background-color: white;
     border-radius: 16px;
     width: 90%;
-    max-width: 380px;
+    max-width: 420px; /* Increased slightly from 380px */
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
     animation: slideUp 0.3s ease;
 }
@@ -355,14 +293,16 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 1rem 1.25rem;
+    padding: 1.25rem 1.5rem; /* Adjusted padding */
     border-bottom: 2px solid var(--border);
     background-color: var(--bg-secondary);
+    border-top-left-radius: 16px;
+    border-top-right-radius: 16px;
 }
 
 .modal-header h2 {
     color: var(--text-primary);
-    font-size: 1.25rem;
+    font-size: 1.375rem; /* Slightly larger */
     margin: 0;
     font-weight: 700;
 }
@@ -380,6 +320,7 @@ body {
     justify-content: center;
     border-radius: 50%;
     transition: all 0.2s ease;
+    line-height: 1;
 }
 
 .modal-close:hover {
@@ -388,7 +329,130 @@ body {
 }
 
 .modal-body {
-    padding: 1.25rem;
+    padding: 1.5rem; /* Adjusted padding */
+}
+
+/* Form Styles */
+.form-group {
+    margin-bottom: 1.25rem; /* Slightly more space */
+}
+
+.form-group:last-of-type {
+    margin-bottom: 0;
+}
+
+.form-group label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+}
+
+.form-group label svg {
+    width: 15px;
+    height: 15px;
+    color: var(--text-muted);
+}
+
+.form-group input,
+.form-group select {
+    width: 100%;
+    padding: 0.75rem 0.875rem;
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    font-size: 0.95rem;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    transition: all 0.2s ease;
+    font-family: 'Roboto', sans-serif;
+    box-sizing: border-box; /* Ensure padding is included in width */
+}
+
+.form-group input::placeholder {
+    color: #cbd5e1;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1);
+    background: white;
+}
+
+.input-with-icon {
+    position: relative;
+    display: block;
+}
+
+.input-with-icon .currency-symbol {
+    position: absolute;
+    left: 0.875rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    font-size: 1rem;
+    font-weight: 600;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.input-with-icon input {
+    padding-left: 2.25rem;
+    width: 100%;
+}
+
+/* Form Actions */
+.form-actions {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 1.75rem; /* More space above buttons */
+}
+
+.btn-primary,
+.btn-danger {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border: none;
+    padding: 0.875rem 1.25rem; /* Slightly more padding */
+    border-radius: 10px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--primary), var(--accent));
+    color: white;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3);
+}
+
+.btn-danger {
+    background-color: var(--danger);
+    color: white;
+}
+
+.btn-danger:hover {
+    background-color: #dc2626;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+.btn-primary svg,
+.btn-danger svg {
+    width: 16px;
+    height: 16px;
 }
 
 /* Form Styles */
@@ -511,45 +575,502 @@ body {
 
 /* Responsive Design */
 @media (max-width: 768px) {
-    .header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 1rem;
+    .account-main {
+        flex-wrap: wrap;
     }
     
-    .header h1 {
-        font-size: 1.75rem;
-    }
-    
-    .btn-add-account {
+    .account-main-left {
+        order: 1;
         width: 100%;
-        justify-content: center;
     }
     
-    .summary-grid {
-        grid-template-columns: 1fr;
+    .account-balance-section {
+        order: 2;
+        width: 100%;
+        justify-content: flex-end;
+        margin-top: 0.5rem;
     }
     
-    .account-item {
+    .account-transaction-item {
         flex-direction: column;
         align-items: flex-start;
-        gap: 1rem;
+        gap: 0.75rem;
+    }
+    
+    .transaction-right {
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-left: 0;
+    }
+}
+
+/* Expandable Account Details */
+/* Expandable Account Details */
+.account-item {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 1rem;
+}
+
+.account-main {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.25rem;
+    background: var(--bg-primary); /* Changed from var(--bg-secondary) to white */
+    border: 2px solid var(--border);
+    border-left: 5px solid;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    width: 100%;
+}
+
+.account-item.asset .account-main {
+    border-left-color: var(--success);
+}
+
+.account-item.debt .account-main {
+    border-left-color: var(--danger);
+}
+
+.account-main:hover {
+    border-color: rgba(249, 115, 22, 0.3);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.account-main-left {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex: 1;
+}
+
+.account-expand-icon {
+    color: var(--text-muted);
+    transition: transform 0.3s ease;
+    flex-shrink: 0;
+}
+
+.account-expand-icon svg {
+    width: 20px;
+    height: 20px;
+}
+
+.account-item.expanded .account-expand-icon {
+    transform: rotate(90deg);
+}
+
+.account-item.expanded .account-main {
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    border-bottom: none; /* Remove bottom border when expanded */
+}
+
+.account-transactions {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+    background: white;
+    border: 2px solid var(--border);
+    border-top: none;
+    border-bottom-left-radius: 12px;
+    border-bottom-right-radius: 12px;
+    width: 100%; /* Ensure full width */
+}
+
+/* Match the left border color */
+.account-item.asset .account-transactions {
+    border-left: 5px solid var(--success);
+}
+
+.account-item.debt .account-transactions {
+    border-left: 5px solid var(--danger);
+}
+
+.account-item.expanded .account-transactions {
+    max-height: 600px;
+    overflow-y: auto;
+}
+
+.account-transactions-header {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-secondary);
+}
+
+.account-transactions-header h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.account-transactions-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.account-transaction-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.account-transaction-item:last-child {
+    border-bottom: none;
+}
+
+.account-transaction-item:hover {
+    background: var(--bg-secondary);
+}
+
+.transaction-left {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex: 1;
+}
+
+.transaction-type-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.transaction-type-icon.income {
+    background: #dcfce7;
+    color: var(--success);
+}
+
+.transaction-type-icon.expense {
+    background: #fee2e2;
+    color: var(--danger);
+}
+
+.transaction-type-icon svg {
+    width: 20px;
+    height: 20px;
+}
+
+.transaction-details-text {
+    flex: 1;
+}
+
+.transaction-merchant {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+    font-size: 1rem;
+}
+
+.transaction-category {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+}
+
+.transaction-right {
+    text-align: right;
+    margin-left: 1rem;
+}
+
+.transaction-amount {
+    font-weight: 700;
+    font-size: 1.125rem;
+    margin-bottom: 0.25rem;
+}
+
+.transaction-amount.income {
+    color: var(--success);
+}
+
+.transaction-amount.expense {
+    color: var(--danger);
+}
+
+.transaction-date {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+}
+
+.no-transactions {
+    padding: 2rem 1.25rem;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.95rem;
+}
+
+.account-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-left: 1rem;
+}
+
+.btn-account-action {
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--text-muted);
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.btn-account-action:hover {
+    background: var(--bg-secondary);
+    color: var(--primary);
+    border-color: var(--primary);
+}
+
+.btn-account-action svg {
+    width: 16px;
+    height: 16px;
+}
+
+/* Empty State Override for Account List */
+.accounts-list .empty-state {
+    display: none;
+}
+
+.accounts-list .empty-state.visible {
+    display: flex;
+}
+
+.account-balance {
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.account-balance.asset-balance {
+    color: var(--success);
+}
+
+.account-balance.debt-balance {
+    color: var(--danger);
+}
+
+/* Empty State Override for Account List */
+.accounts-list .empty-state {
+    display: none;
+}
+
+.accounts-list .empty-state.visible {
+    display: flex;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .account-main {
+        flex-wrap: wrap;
+    }
+    
+    .account-main-left {
+        order: 1;
+        width: 100%;
+    }
+    
+    .account-actions {
+        order: 2;
+        margin-left: 0;
     }
     
     .account-balance {
-        align-self: flex-end;
+        order: 3;
+        width: 100%;
+        text-align: right;
+        margin-top: 0.5rem;
     }
     
-    .modal-container {
-        width: 95%;
-    }
-    
-    .form-actions {
+    .account-transaction-item {
         flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
     }
     
-    .btn-primary,
-    .btn-danger {
+    .transaction-right {
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-left: 0;
+    }
+}
+
+@media (max-width: 768px) {
+    .account-main {
+        flex-wrap: wrap;
+    }
+    
+    .account-main-left {
+        order: 1;
         width: 100%;
     }
+    
+    .account-actions {
+        order: 2;
+        margin-left: 0;
+    }
+
+    .account-balance {
+    font-size: 1.5rem;
+    font-weight: 700;
+    }
+
+.account-balance.asset-balance {
+    color: var(--success);
+    }
+
+.account-balance.debt-balance {
+    color: var(--danger);
+    }
+    
+    .account-transaction-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
+    
+    .transaction-right {
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-left: 0;
+    }
+}
+
+/* Account Balance Section */
+.account-balance-section {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.account-balance {
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.account-balance.asset-balance {
+    color: var(--success);
+}
+
+.account-balance.debt-balance {
+    color: var(--danger);
+}
+
+/* Account Actions Dropdown */
+.account-actions {
+    display: flex;
+    align-items: center;
+    position: relative;
+}
+
+.btn-account-action {
+    background: transparent;
+    border: none;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--text-muted);
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+    border-radius: 6px;
+}
+
+.btn-account-action:hover {
+    background: var(--bg-secondary);
+    color: var(--primary);
+}
+
+.btn-account-action.active {
+    background: var(--bg-secondary);
+    color: var(--primary);
+}
+
+.btn-account-action svg {
+    width: 18px;
+    height: 18px;
+}
+
+/* Dropdown Menu */
+.account-dropdown {
+    position: absolute;
+    top: calc(100% + 0.5rem);
+    right: 0;
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    min-width: 180px;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.2s ease;
+    z-index: 1000;
+}
+
+.account-dropdown.visible {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.account-dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    transition: background 0.2s ease;
+    border: none;
+    background: none;
+    width: 100%;
+    text-align: left;
+    font-size: 0.95rem;
+    color: var(--text-primary);
+}
+
+.account-dropdown-item:first-child {
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+}
+
+.account-dropdown-item:last-child {
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+}
+
+.account-dropdown-item:hover {
+    background: var(--bg-secondary);
+}
+
+.account-dropdown-item svg {
+    width: 16px;
+    height: 16px;
+    color: var(--text-muted);
+}
+
+.account-dropdown-item:hover svg {
+    color: var(--primary);
 }
