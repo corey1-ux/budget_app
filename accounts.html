@@ -3,66 +3,137 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Accounts - Budget App</title>
+    <title>Accounts - BudgetFlow</title>
+    
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
     <link rel="stylesheet" href="css/main.css">
     <link rel="stylesheet" href="css/navbar.css">
-    <link rel="stylesheet" href="css/settingsModal.css">
     <link rel="stylesheet" href="css/accounts.css">
+    <link rel="stylesheet" href="css/settingsModal.css">
 </head>
 <body>
     <main class="container">
         <div class="header">
-            <h2>Manage Accounts</h2>
-            <button class="btn-primary" id="showAddAccountModalBtn">+ Add Account</button>
+            <h1>Accounts</h1>
+            <button class="btn-add-account" id="showAddAccountModalBtn">
+                <i data-lucide="plus"></i>
+                <span>Add Account</span>
+            </button>
         </div>
 
-        <div class="accounts-summary">
-            <div class="summary-card">
-                <h3>Total Assets</h3>
-                <p id="totalAssets">$0.00</p>
+        <!-- Summary Cards -->
+        <div class="summary-grid">
+            <div class="card summary-card assets">
+                <div class="card-header">
+                    <div class="card-icon assets">
+                        <i data-lucide="trending-up"></i>
+                    </div>
+                    <h3>Total Assets</h3>
+                </div>
+                <div class="card-body">
+                    <p class="summary-value" id="totalAssets">$0.00</p>
+                </div>
             </div>
-            <div class="summary-card">
-                <h3>Total Debts</h3>
-                <p id="totalDebts">$0.00</p>
+
+            <div class="card summary-card debts">
+                <div class="card-header">
+                    <div class="card-icon debts">
+                        <i data-lucide="trending-down"></i>
+                    </div>
+                    <h3>Total Debts</h3>
+                </div>
+                <div class="card-body">
+                    <p class="summary-value" id="totalDebts">$0.00</p>
+                </div>
             </div>
-            <div class="summary-card net-worth">
-                <h3>Net Worth</h3>
-                <p id="netWorth">$0.00</p>
+
+            <div class="card summary-card net-worth">
+                <div class="card-header">
+                    <div class="card-icon net-worth">
+                        <i data-lucide="dollar-sign"></i>
+                    </div>
+                    <h3>Net Worth</h3>
+                </div>
+                <div class="card-body">
+                    <p class="summary-value" id="netWorth">$0.00</p>
+                </div>
             </div>
         </div>
 
-        <div class="accounts-list" id="accountsList">
+        <!-- Accounts List -->
+        <div class="card accounts-card">
+            <div class="card-header">
+                <div class="card-icon">
+                    <i data-lucide="wallet"></i>
+                </div>
+                <h3>Your Accounts</h3>
             </div>
+            <div class="card-body">
+                <div class="accounts-list" id="accountsList">
+                    <!-- Account items will be added here -->
+                </div>
+                <div class="empty-state" id="emptyState">
+                    <i data-lucide="wallet"></i>
+                    <p>No accounts yet</p>
+                    <span>Click "Add Account" to create your first account</span>
+                </div>
+            </div>
+        </div>
     </main>
 
+    <!-- Account Modal -->
     <div class="modal-overlay" id="accountModal">
         <div class="modal-container">
             <div class="modal-header">
                 <h2 id="modalTitle">Add Account</h2>
                 <button class="modal-close" id="closeAccountModalBtn">×</button>
             </div>
-            <div class="modal-body-form">
+            <div class="modal-body">
                 <form id="accountForm">
                     <input type="hidden" id="accountId">
+                    
                     <div class="form-group">
-                        <label for="accountName">Account Name</label>
+                        <label for="accountName">
+                            <i data-lucide="tag"></i>
+                            Account Name
+                        </label>
                         <input type="text" id="accountName" placeholder="e.g., Chase Checking" required>
                     </div>
+                    
                     <div class="form-group">
-                        <label for="accountBalance">Current Balance</label>
-                        <input type="number" id="accountBalance" step="0.01" placeholder="1000.00" required>
+                        <label for="accountBalance">
+                            <i data-lucide="dollar-sign"></i>
+                            Current Balance
+                        </label>
+                        <div class="input-with-icon">
+                            <span class="currency-symbol">$</span>
+                            <input type="number" id="accountBalance" step="0.01" placeholder="0.00" required>
+                        </div>
                     </div>
+                    
                     <div class="form-group">
-                        <label for="accountType">Account Type</label>
+                        <label for="accountType">
+                            <i data-lucide="layers"></i>
+                            Account Type
+                        </label>
                         <select id="accountType" required>
-                            <option value="asset">Asset (e.g., Checking, Savings)</option>
-                            <option value="debt">Debt (e.g., Credit Card, Loan)</option>
+                            <option value="">Select Type</option>
+                            <option value="asset">Asset (Checking, Savings, Cash)</option>
+                            <option value="debt">Debt (Credit Card, Loan)</option>
                         </select>
                     </div>
+                    
                     <div class="form-actions">
-                        <button type="submit" class="btn-primary" id="saveAccountBtn">Save Account</button>
-                        <button type="button" class="btn-danger" id="deleteAccountBtn" style="display: none;">Delete</button>
+                        <button type="submit" class="btn-primary" id="saveAccountBtn">
+                            <i data-lucide="check"></i>
+                            Save Account
+                        </button>
+                        <button type="button" class="btn-danger" id="deleteAccountBtn" style="display: none;">
+                            <i data-lucide="trash-2"></i>
+                            Delete Account
+                        </button>
                     </div>
                 </form>
             </div>
@@ -70,8 +141,8 @@
     </div>
 
     <script src="js/supabaseClient.js"></script>
-    <script src="js/settingsModal.js"></script>
     <script src="js/navbar.js"></script>
+    <script src="js/settingsModal.js"></script>
     <script src="js/accounts.js"></script>
 </body>
 </html>

@@ -1,155 +1,300 @@
-document.addEventListener('DOMContentLoaded', () => {
-    // Modal elements
-    const accountModal = document.getElementById('accountModal');
+// js/accounts.js
+
+// ==========================================
+// STATE MANAGEMENT
+// ==========================================
+
+let isInitialized = false;
+
+// ==========================================
+// INITIALIZATION
+// ==========================================
+
+async function initializeAccountsPage() {
+    const user = await requireAuth();
+    if (!user) return;
+
+    // Set up event listeners (only once)
+    if (!isInitialized) {
+        setupEventListeners();
+        isInitialized = true;
+    }
+    
+    // Load accounts data
+    await fetchAndRenderAccounts();
+}
+
+function setupEventListeners() {
     const showAddAccountModalBtn = document.getElementById('showAddAccountModalBtn');
     const closeAccountModalBtn = document.getElementById('closeAccountModalBtn');
+    const accountModal = document.getElementById('accountModal');
+    const accountForm = document.getElementById('accountForm');
+    const deleteAccountBtn = document.getElementById('deleteAccountBtn');
+    
+    // Show modal
+    if (showAddAccountModalBtn) {
+        showAddAccountModalBtn.addEventListener('click', () => showModal());
+    }
+    
+    // Close modal
+    if (closeAccountModalBtn) {
+        closeAccountModalBtn.addEventListener('click', hideModal);
+    }
+    
+    // Close modal on overlay click
+    if (accountModal) {
+        accountModal.addEventListener('click', (e) => {
+            if (e.target === accountModal) hideModal();
+        });
+    }
+    
+    // Form submission
+    if (accountForm) {
+        accountForm.addEventListener('submit', handleFormSubmit);
+    }
+    
+    // Delete button
+    if (deleteAccountBtn) {
+        deleteAccountBtn.addEventListener('click', handleDelete);
+    }
+}
+
+// ==========================================
+// PAGE LIFECYCLE EVENT LISTENERS
+// ==========================================
+
+window.addEventListener('DOMContentLoaded', initializeAccountsPage);
+
+window.addEventListener('pageshow', (event) => {
+    if (event.persisted) {
+        isInitialized = false;
+        initializeAccountsPage();
+    }
+});
+
+// ==========================================
+// MODAL FUNCTIONS
+// ==========================================
+
+function showModal(account = null) {
+    const accountModal = document.getElementById('accountModal');
     const accountForm = document.getElementById('accountForm');
     const modalTitle = document.getElementById('modalTitle');
     const deleteAccountBtn = document.getElementById('deleteAccountBtn');
-
-    // DOM elements for display
-    const accountsList = document.getElementById('accountsList');
-    const totalAssetsEl = document.getElementById('totalAssets');
-    const totalDebtsEl = document.getElementById('totalDebts');
-    const netWorthEl = document.getElementById('netWorth');
-
-    // --- Modal Logic ---
-    const showModal = (account = null) => {
-        accountForm.reset();
-        if (account) {
-            modalTitle.textContent = 'Edit Account';
-            document.getElementById('accountId').value = account.id;
-            document.getElementById('accountName').value = account.name;
-            document.getElementById('accountBalance').value = account.balance;
-            document.getElementById('accountType').value = account.type;
-            deleteAccountBtn.style.display = 'block';
-        } else {
-            modalTitle.textContent = 'Add Account';
-            document.getElementById('accountId').value = '';
-            deleteAccountBtn.style.display = 'none';
-        }
-        accountModal.classList.add('active');
-    };
-
-    const hideModal = () => {
-        accountModal.classList.remove('active');
-    };
-
-    showAddAccountModalBtn.addEventListener('click', () => showModal());
-    closeAccountModalBtn.addEventListener('click', hideModal);
-    accountModal.addEventListener('click', (e) => {
-        if (e.target === accountModal) hideModal();
-    });
-
-    // --- Data Logic ---
-    const fetchAndRenderAccounts = async () => {
-        try {
-            const { data: accounts, error } = await supabase
-                .from('accounts')
-                .select('*')
-                .order('created_at', { ascending: true });
-
-            if (error) throw error;
-
-            accountsList.innerHTML = '';
-            let totalAssets = 0;
-            let totalDebts = 0;
-
-            if (accounts.length === 0) {
-                accountsList.innerHTML = '<p class="empty-state">No accounts yet. Add your first one!</p>';
-            }
-
-            accounts.forEach(account => {
-                const card = document.createElement('div');
-                card.className = `account-card ${account.type}`;
-                card.innerHTML = `
-                    <div class="account-info">
-                        <h4>${account.name}</h4>
-                        <p>${account.type}</p>
-                    </div>
-                    <div class="account-balance">$${parseFloat(account.balance).toFixed(2)}</div>
-                `;
-                card.addEventListener('click', () => showModal(account));
-                accountsList.appendChild(card);
-
-                if (account.type === 'asset') {
-                    totalAssets += parseFloat(account.balance);
-                } else {
-                    totalDebts += parseFloat(account.balance);
-                }
-            });
-
-            totalAssetsEl.textContent = `$${totalAssets.toFixed(2)}`;
-            totalDebtsEl.textContent = `$${totalDebts.toFixed(2)}`;
-            netWorthEl.textContent = `$${(totalAssets - totalDebts).toFixed(2)}`;
-
-        } catch (err) {
-            console.error('Error fetching accounts:', err);
-            accountsList.innerHTML = '<p class="empty-state error">Could not fetch accounts.</p>';
-        }
-    };
-
-    // --- Form Submission ---
-    accountForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        
-        // --- THIS IS THE FIX ---
-        // Get the current user's data first
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
-            alert('You must be logged in to add an account.');
-            return;
-        }
-
-        const accountId = document.getElementById('accountId').value;
-        const accountData = {
-            name: document.getElementById('accountName').value,
-            balance: parseFloat(document.getElementById('accountBalance').value),
-            type: document.getElementById('accountType').value,
-            user_id: user.id // Include the user's ID in the data
-        };
-
-        try {
-            let error;
-            if (accountId) {
-                // Update existing account
-                // We don't need to send the user_id on an update, RLS handles it.
-                delete accountData.user_id; 
-                ({ error } = await supabase.from('accounts').update(accountData).eq('id', accountId));
-            } else {
-                // Insert new account
-                ({ error } = await supabase.from('accounts').insert(accountData));
-            }
-
-            if (error) throw error;
-
-            hideModal();
-            fetchAndRenderAccounts();
-        } catch (err) {
-            console.error('Error saving account:', err);
-            alert('Failed to save account. Check the console for details.');
-        }
-    });
     
-    // --- Delete Logic ---
-    deleteAccountBtn.addEventListener('click', async () => {
-        const accountId = document.getElementById('accountId').value;
-        if (!accountId || !confirm('Are you sure you want to delete this account?')) {
+    if (!accountModal || !accountForm) return;
+    
+    accountForm.reset();
+    
+    if (account) {
+        // Edit mode
+        modalTitle.textContent = 'Edit Account';
+        document.getElementById('accountId').value = account.id;
+        document.getElementById('accountName').value = account.name;
+        // Just set the numeric value, not formatted
+        document.getElementById('accountBalance').value = parseFloat(account.balance);
+        document.getElementById('accountType').value = account.type;
+        if (deleteAccountBtn) deleteAccountBtn.style.display = 'flex';
+    } else {
+        // Add mode
+        modalTitle.textContent = 'Add Account';
+        document.getElementById('accountId').value = '';
+        if (deleteAccountBtn) deleteAccountBtn.style.display = 'none';
+    }
+    
+    accountModal.classList.add('active');
+    
+    // Initialize Lucide icons in modal
+    setTimeout(() => {
+        lucide.createIcons();
+    }, 10);
+}
+
+function hideModal() {
+    const accountModal = document.getElementById('accountModal');
+    if (accountModal) {
+        accountModal.classList.remove('active');
+    }
+}
+
+// ==========================================
+// EVENT HANDLERS
+// ==========================================
+
+async function handleFormSubmit(e) {
+    e.preventDefault();
+    
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+        alert('You must be logged in to add an account.');
+        return;
+    }
+
+    const accountId = document.getElementById('accountId').value;
+    const accountData = {
+        name: document.getElementById('accountName').value,
+        balance: parseFloat(document.getElementById('accountBalance').value),
+        type: document.getElementById('accountType').value,
+    };
+
+    try {
+        let error;
+        if (accountId) {
+            // Update existing account
+            ({ error } = await supabase
+                .from('accounts')
+                .update(accountData)
+                .eq('id', accountId));
+        } else {
+            // Insert new account
+            accountData.user_id = user.id;
+            ({ error } = await supabase
+                .from('accounts')
+                .insert(accountData));
+        }
+
+        if (error) throw error;
+
+        hideModal();
+        await fetchAndRenderAccounts();
+        
+    } catch (err) {
+        console.error('Error saving account:', err);
+        alert('Failed to save account. Check the console for details.');
+    }
+}
+
+async function handleDelete() {
+    const accountId = document.getElementById('accountId').value;
+    
+    if (!accountId || !confirm('Are you sure you want to delete this account? This action cannot be undone.')) {
+        return;
+    }
+
+    try {
+        const { error } = await supabase
+            .from('accounts')
+            .delete()
+            .eq('id', accountId);
+            
+        if (error) throw error;
+
+        hideModal();
+        await fetchAndRenderAccounts();
+        
+    } catch (err) {
+        console.error('Error deleting account:', err);
+        alert('Failed to delete account.');
+    }
+}
+
+// ==========================================
+// DATA LOADING AND RENDERING
+// ==========================================
+
+async function fetchAndRenderAccounts() {
+    try {
+        const { data: accounts, error } = await supabase
+            .from('accounts')
+            .select('*')
+            .order('created_at', { ascending: true });
+
+        if (error) throw error;
+
+        const accountsList = document.getElementById('accountsList');
+        const emptyState = document.getElementById('emptyState');
+        const totalAssetsEl = document.getElementById('totalAssets');
+        const totalDebtsEl = document.getElementById('totalDebts');
+        const netWorthEl = document.getElementById('netWorth');
+
+        if (!accountsList) return;
+
+        let totalAssets = 0;
+        let totalDebts = 0;
+
+        // Clear existing accounts
+        accountsList.innerHTML = '';
+
+        if (!accounts || accounts.length === 0) {
+            if (emptyState) emptyState.classList.add('visible');
+            if (totalAssetsEl) totalAssetsEl.textContent = '$0.00';
+            if (totalDebtsEl) totalDebtsEl.textContent = '$0.00';
+            if (netWorthEl) netWorthEl.textContent = '$0.00';
             return;
         }
 
-        try {
-            const { error } = await supabase.from('accounts').delete().eq('id', accountId);
-            if (error) throw error;
+        // Hide empty state
+        if (emptyState) emptyState.classList.remove('visible');
 
-            hideModal();
-            fetchAndRenderAccounts();
-        } catch (err) {
-            console.error('Error deleting account:', err);
-            alert('Failed to delete account.');
+        // Render accounts
+        accounts.forEach(account => {
+            const accountItem = createAccountItem(account);
+            accountsList.appendChild(accountItem);
+
+            // Calculate totals
+            const balance = parseFloat(account.balance) || 0;
+            if (account.type === 'asset') {
+                totalAssets += balance;
+            } else {
+                totalDebts += balance;
+            }
+        });
+
+        // Update summary
+        if (totalAssetsEl) totalAssetsEl.textContent = formatCurrency(totalAssets);
+        if (totalDebtsEl) totalDebtsEl.textContent = formatCurrency(totalDebts);
+        if (netWorthEl) {
+            const netWorth = totalAssets - totalDebts;
+            netWorthEl.textContent = formatCurrency(netWorth);
         }
-    });
 
-    // Initial load
-    fetchAndRenderAccounts();
-});
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+    } catch (err) {
+        console.error('Error fetching accounts:', err);
+    }
+}
+
+function createAccountItem(account) {
+    const accountItem = document.createElement('div');
+    accountItem.className = `account-item ${account.type}`;
+    
+    const balance = parseFloat(account.balance) || 0;
+    const balanceClass = balance >= 0 ? 'positive' : 'negative';
+    
+    // Choose icon based on type
+    const icon = account.type === 'asset' ? 'wallet' : 'credit-card';
+    
+    accountItem.innerHTML = `
+        <div class="account-info">
+            <div class="account-icon ${account.type}">
+                <i data-lucide="${icon}"></i>
+            </div>
+            <div class="account-details">
+                <h4>${account.name}</h4>
+                <p>${account.type}</p>
+            </div>
+        </div>
+        <div class="account-balance ${balanceClass}">
+            ${formatCurrency(balance)}
+        </div>
+    `;
+    
+    // Click to edit
+    accountItem.addEventListener('click', () => showModal(account));
+    
+    return accountItem;
+}
+
+// ==========================================
+// UTILITY FUNCTIONS
+// ==========================================
+
+function formatCurrency(amount) {
+    const value = parseFloat(amount) || 0;
+    return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD'
+    }).format(value);
+}

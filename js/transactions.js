@@ -273,7 +273,7 @@ async function populateAccountsDropdowns() {
         const { data, error } = await supabase
             .from('accounts')
             .select('name, type')
-            .eq('type', 'asset') // Only show asset accounts
+            // Remove the .eq('type', 'asset') filter
             .order('name', { ascending: true });
         
         if (error) throw error;
@@ -282,7 +282,7 @@ async function populateAccountsDropdowns() {
         if (!accountSelect) return;
         
         if (!data || data.length === 0) {
-            accountSelect.innerHTML = '<option value="">No asset accounts available</option>';
+            accountSelect.innerHTML = '<option value="">No accounts available</option>';
             return;
         }
         
