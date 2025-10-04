@@ -10,7 +10,6 @@
     --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.06);
 }
 
-
 * {
     margin: 0;
     padding: 0;
@@ -18,8 +17,7 @@
 }
 
 body {
-    /* --- THIS IS THE FIX --- */
-    font-family: 'Roboto', sans-serif; /* Changed from 'Inter' */
+    font-family: 'Roboto', sans-serif;
     background-color: #f8fafc;
     color: var(--text-primary);
 }
@@ -36,12 +34,14 @@ body {
     position: sticky;
     top: 0;
     z-index: 1000;
+    gap: 2rem;
 }
 
 .nav-brand {
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    flex-shrink: 0;
 }
 
 .logo {
@@ -54,13 +54,88 @@ body {
     font-weight: 700;
 }
 
+/* Inline Month Navigation */
+.month-nav-inline {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-width: 280px;
+    padding: 0.5rem 1rem;
+    background: var(--bg-primary);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+.month-display-inline {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.125rem;
+    min-height: 38px;
+    justify-content: center;
+    flex: 1;
+}
+
+.month-display-inline h2 {
+    color: var(--text-primary);
+    font-size: 1rem;
+    font-weight: 700;
+    margin: 0;
+    white-space: nowrap;
+    line-height: 1.2;
+}
+
+.btn-month-nav {
+    background-color: #f8fafc;
+    color: var(--text-secondary);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    font-size: 1.125rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.btn-month-nav:hover {
+    background-color: #f1f5f9;
+    border-color: #cbd5e1;
+    color: var(--primary);
+}
+
+.btn-current-month {
+    background: none;
+    color: var(--text-secondary);
+    border: none;
+    border-radius: 4px;
+    padding: 0.125rem 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: color 0.2s ease;
+    min-height: 18px;
+}
+
+.btn-current-month:hover {
+    color: var(--primary);
+}
+
+.btn-current-month.hidden {
+    visibility: hidden;
+}
+
 /* User Profile section */
 .nav-right {
     display: flex;
     align-items: center;
     gap: 1rem;
-    margin-left: auto;
-    padding-right: 1rem;
+    flex-shrink: 0;
 }
 
 .user-profile {
@@ -110,6 +185,7 @@ body {
     transform: rotate(-45deg) translate(6px, -6px);
 }
 
+/* Mobile Dropdown Menu */
 .nav-menu {
     position: absolute;
     top: calc(100% + 10px);
@@ -122,13 +198,13 @@ body {
     overflow: hidden;
     transition: max-height 0.3s ease-out;
     box-shadow: var(--shadow-md);
-    border: none; /* Change from 1px solid var(--border) to none */
+    border: none;
     border-radius: 12px;
 }
 
 .nav-menu.active {
     max-height: 600px;
-    border: 1px solid var(--border); /* Add the border only when active */
+    border: 1px solid var(--border);
 }
 
 .nav-link {
@@ -140,6 +216,7 @@ body {
     border-bottom: 1px solid var(--border);
     display: block;
 }
+
 .nav-link:last-child {
     border-bottom: none;
 }
@@ -149,9 +226,67 @@ body {
     color: var(--primary);
 }
 
-/* Hide user profile on small screens, as it's in the menu */
-@media (max-width: 768px) {
+/* Responsive */
+@media (max-width: 992px) {
     .nav-right {
         display: none;
+    }
+    
+    .month-nav-inline {
+        display: none !important;
+    }
+}
+
+@media (min-width: 993px) {
+    /* Desktop layout - use grid for proper centering */
+    .navbar {
+        display: grid;
+        grid-template-columns: 1fr auto 1fr;
+        gap: 2rem;
+        align-items: center;
+    }
+    
+    .nav-brand {
+        grid-column: 1;
+        justify-self: start;
+    }
+    
+    /* Center column for nav menu OR month nav */
+    .nav-menu {
+        grid-column: 2;
+        justify-self: center;
+    }
+    
+    .month-nav-inline {
+        grid-column: 2;
+        grid-row: 1;
+        justify-self: center;
+    }
+    
+    .nav-right {
+        grid-column: 3;
+        justify-self: end;
+    }
+    
+    .hamburger {
+        display: none;
+    }
+    
+    .nav-menu {
+        position: static;
+        flex-direction: row;
+        width: auto;
+        max-height: none;
+        overflow: visible;
+        box-shadow: none;
+        border: none;
+        border-radius: 0;
+        gap: 0.5rem;
+    }
+    
+    .nav-link {
+        padding: 0.5rem 1rem;
+        border-bottom: none;
+        border-radius: 8px;
     }
 }

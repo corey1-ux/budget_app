@@ -10,15 +10,16 @@ async function loadNavbar() {
         // Update UI based on auth state
         await updateNavUI();
 
-        // Now initialize navbar functionality
+        // Initialize navbar functionality
         initNavbar();
+        
+        // Initialize month navigation if needed
+        initMonthNavInNavbar();
         
     } catch (error) {
         console.error('Error loading navbar:', error);
     }
 }
-
-// js/navbar.js
 
 async function updateNavUI() {
     const userProfile = document.getElementById('userProfile');
@@ -50,7 +51,6 @@ async function updateNavUI() {
                 const avatarUrl = user.user_metadata?.avatar_url;
                 if(userGreeting) userGreeting.textContent = `Hello, ${fullName}`;
                 
-                // --- THIS IS THE FIX ---
                 if (avatarUrl && userAvatar) userAvatar.src = avatarUrl;
                 
                 if (userProfile) userProfile.style.display = 'flex';
@@ -62,7 +62,7 @@ async function updateNavUI() {
             if (userProfile) userProfile.style.display = 'none';
             if (signInBtn) {
                 signInBtn.textContent = 'Sign In';
-                signInBtn.href = 'login.html';
+                signInBtn.href = 'index.html';
                 signInBtn.style.display = 'block';
             }
             mainNavLinks.forEach(link => link.style.display = 'none');
@@ -73,6 +73,7 @@ async function updateNavUI() {
         if (signInBtn) signInBtn.style.display = 'block';
     }
 }
+
 // Initialize navbar functionality
 function initNavbar() {
     const hamburger = document.getElementById('hamburger');
@@ -152,6 +153,71 @@ function initNavbar() {
                 console.error('Logout error:', error);
             }
         });
+    }
+}
+
+// Initialize month navigation in navbar
+function initMonthNavInNavbar() {
+    const monthNavInline = document.getElementById('monthNavInline');
+    
+    // Only show month nav on specific pages
+    const currentPage = window.location.pathname.split('/').pop();
+    const pagesWithMonthNav = ['dashboard.html', 'budget.html', 'transactions.html'];
+    
+    if (pagesWithMonthNav.includes(currentPage) && monthNavInline) {
+        monthNavInline.style.display = 'flex';
+        
+        const prevMonthBtn = document.getElementById('prevMonth');
+        const nextMonthBtn = document.getElementById('nextMonth');
+        const goToCurrentMonthBtn = document.getElementById('goToCurrentMonth');
+        const monthDisplayEl = document.getElementById('currentMonthDisplay');
+        
+        if (!prevMonthBtn || !nextMonthBtn || !monthDisplayEl) {
+            console.error('Month nav elements not found');
+            return;
+        }
+        
+        // Update month display
+        function updateMonthDisplay() {
+            monthDisplayEl.textContent = MonthNavigation.getDisplayName(MonthNavigation.currentMonth);
+            
+            if (goToCurrentMonthBtn) {
+                if (MonthNavigation.isViewingCurrentMonth()) {
+                    goToCurrentMonthBtn.classList.add('hidden');
+                } else {
+                    goToCurrentMonthBtn.classList.remove('hidden');
+                }
+            }
+        }
+        
+        // Event listeners
+        prevMonthBtn.addEventListener('click', () => {
+            MonthNavigation.previousMonth();
+            updateMonthDisplay();
+            window.dispatchEvent(new CustomEvent('monthChanged'));
+        });
+        
+        nextMonthBtn.addEventListener('click', () => {
+            MonthNavigation.nextMonth();
+            updateMonthDisplay();
+            window.dispatchEvent(new CustomEvent('monthChanged'));
+        });
+        
+        if (goToCurrentMonthBtn) {
+            goToCurrentMonthBtn.addEventListener('click', () => {
+                MonthNavigation.goToCurrent();
+                updateMonthDisplay();
+                window.dispatchEvent(new CustomEvent('monthChanged'));
+            });
+        }
+        
+        // Initialize display
+        MonthNavigation.init();
+        updateMonthDisplay();
+        
+        // Fire ready event
+        const readyEvent = new CustomEvent('monthNavReady');
+        window.dispatchEvent(readyEvent);
     }
 }
 
