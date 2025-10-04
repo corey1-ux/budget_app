@@ -110,7 +110,6 @@ body {
     transform: rotate(-45deg) translate(6px, -6px);
 }
 
-/* Mobile Dropdown Menu */
 .nav-menu {
     position: absolute;
     top: calc(100% + 10px);
@@ -123,12 +122,13 @@ body {
     overflow: hidden;
     transition: max-height 0.3s ease-out;
     box-shadow: var(--shadow-md);
-    border: 1px solid var(--border);
+    border: none; /* Change from 1px solid var(--border) to none */
     border-radius: 12px;
 }
 
 .nav-menu.active {
     max-height: 600px;
+    border: 1px solid var(--border); /* Add the border only when active */
 }
 
 .nav-link {
