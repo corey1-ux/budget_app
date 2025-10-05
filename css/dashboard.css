@@ -172,3 +172,13 @@ body {
         grid-template-columns: repeat(2, 1fr); 
     }
 }
+
+/* Chart Cards */
+.chart-card {
+    margin-bottom: 1.5rem;
+}
+
+.chart-container-large {
+    height: 350px;
+    position: relative;
+}

@@ -128,6 +128,30 @@ function handleTypeToggle(event) {
         typeInput.value = btn.dataset.type;
     }
     
+    // Show/hide transfer destination field
+    const transferToGroup = document.getElementById('transferToAccountGroup');
+    const categoryGroup = document.getElementById('categoryGroup');
+    const categorySelect = document.getElementById('category');
+    const transferToSelect = document.getElementById('transferToAccount');
+    
+    if (btn.dataset.type === 'transfer') {
+        // Show transfer field, hide category
+        if (transferToGroup) transferToGroup.style.display = 'block';
+        if (categoryGroup) categoryGroup.style.display = 'none';
+        
+        // Remove required from category, add to transferToAccount
+        if (categorySelect) categorySelect.removeAttribute('required');
+        if (transferToSelect) transferToSelect.setAttribute('required', 'required');
+    } else {
+        // Hide transfer field, show category
+        if (transferToGroup) transferToGroup.style.display = 'none';
+        if (categoryGroup) categoryGroup.style.display = 'block';
+        
+        // Add required to category, remove from transferToAccount
+        if (categorySelect) categorySelect.setAttribute('required', 'required');
+        if (transferToSelect) transferToSelect.removeAttribute('required');
+    }
+    
     // Update category dropdown
     populateCategoryDropdown();
 }
@@ -140,25 +164,57 @@ async function handleFormSubmit(event) {
         return;
     }
     
+    const type = document.getElementById('type').value;
+    const account = document.getElementById('account').value;
+    const amount = parseFloat(document.getElementById('amount').value);
+    
     // Gather form data
     const transaction = {
         user_id: currentUser.id,
         month_key: MonthNavigation.currentMonth,
-        type: document.getElementById('type').value,
+        type: type,
         merchant: document.getElementById('merchant').value,
-        amount: parseFloat(document.getElementById('amount').value),
+        amount: amount,
         day: document.getElementById('day').value,
-        category: document.getElementById('category').value,
-        account: document.getElementById('account').value,
+        category: type === 'transfer' ? 'Transfer' : document.getElementById('category').value,
+        account: account,
         recurring: document.getElementById('recurring').checked,
+        transfer_to_account: null
     };
     
+    // Handle transfer
+    if (type === 'transfer') {
+        const transferToAccount = document.getElementById('transferToAccount').value;
+        
+        if (!transferToAccount) {
+            alert('Please select a destination account for the transfer.');
+            return;
+        }
+        
+        if (account === transferToAccount) {
+            alert('Cannot transfer to the same account.');
+            return;
+        }
+        
+        transaction.transfer_to_account = transferToAccount;
+    }
+    
     try {
+        // Insert transaction
         const { error } = await supabase
             .from('transactions')
             .insert([transaction]);
         
         if (error) throw error;
+        
+        // Update account balance(s)
+        if (type === 'transfer') {
+            // Transfer: decrease source, increase destination
+            await updateAccountBalanceForTransfer(account, transaction.transfer_to_account, amount, 'add');
+        } else {
+            // Regular income/expense
+            await updateAccountBalance(account, type, amount, 'add');
+        }
         
         // Reset form
         resetForm();
@@ -217,12 +273,36 @@ async function handleDelete(event) {
     }
     
     try {
+        // Get transaction details before deleting
+        const transaction = transactions.find(t => t.id === parseInt(id));
+        if (!transaction) {
+            throw new Error('Transaction not found');
+        }
+        
+        // Delete transaction
         const { error } = await supabase
             .from('transactions')
             .delete()
             .eq('id', id);
         
         if (error) throw error;
+        
+        // Reverse the balance change
+        if (transaction.type === 'transfer') {
+            await updateAccountBalanceForTransfer(
+                transaction.account,
+                transaction.transfer_to_account,
+                transaction.amount,
+                'reverse'
+            );
+        } else {
+            await updateAccountBalance(
+                transaction.account,
+                transaction.type,
+                transaction.amount,
+                'reverse'
+            );
+        }
         
         await loadTransactions();
         
@@ -231,6 +311,153 @@ async function handleDelete(event) {
         alert('Failed to delete transaction. Check console for details.');
     }
 }
+
+async function updateAccountBalance(accountName, transactionType, amount, operation) {
+    try {
+        // Skip if no account name
+        if (!accountName) {
+            console.warn('No account name provided, skipping balance update');
+            return;
+        }
+        
+        // Get current account balance and type
+        const { data: account, error: fetchError } = await supabase
+            .from('accounts')
+            .select('balance, type')
+            .eq('name', accountName)
+            .maybeSingle(); // Use maybeSingle() instead of single()
+
+        if (fetchError) throw fetchError;
+        
+        // If account doesn't exist, log and skip
+        if (!account) {
+            console.warn(`Account "${accountName}" not found, skipping balance update`);
+            return;
+        }
+
+        const currentBalance = parseFloat(account.balance) || 0;
+        const transactionAmount = parseFloat(amount) || 0;
+        const isDebtAccount = account.type === 'debt';
+        let newBalance;
+
+        if (operation === 'add') {
+            // Adding a transaction
+            if (isDebtAccount) {
+                // For debt accounts: expense increases debt, income decreases debt
+                if (transactionType === 'income') {
+                    newBalance = currentBalance - transactionAmount;
+                } else {
+                    newBalance = currentBalance + transactionAmount;
+                }
+            } else {
+                // For asset accounts: income increases balance, expense decreases balance
+                if (transactionType === 'income') {
+                    newBalance = currentBalance + transactionAmount;
+                } else {
+                    newBalance = currentBalance - transactionAmount;
+                }
+            }
+        } else {
+            // Reversing a transaction
+            if (isDebtAccount) {
+                if (transactionType === 'income') {
+                    newBalance = currentBalance + transactionAmount;
+                } else {
+                    newBalance = currentBalance - transactionAmount;
+                }
+            } else {
+                if (transactionType === 'income') {
+                    newBalance = currentBalance - transactionAmount;
+                } else {
+                    newBalance = currentBalance + transactionAmount;
+                }
+            }
+        }
+
+        // Update account balance
+        const { error: updateError } = await supabase
+            .from('accounts')
+            .update({ balance: newBalance })
+            .eq('name', accountName);
+
+        if (updateError) throw updateError;
+        
+    } catch (err) {
+        console.error('Error updating account balance:', err);
+        throw err;
+    }
+}
+
+async function updateAccountBalanceForTransfer(fromAccount, toAccount, amount, operation) {
+    try {
+        const transactionAmount = parseFloat(amount) || 0;
+        
+        console.log('Transfer balance update:', {fromAccount, toAccount, amount, operation});
+        
+        // Get both accounts
+        const { data: accounts, error: fetchError } = await supabase
+            .from('accounts')
+            .select('name, balance, type')
+            .in('name', [fromAccount, toAccount]);
+
+        if (fetchError) throw fetchError;
+        
+        const fromAcc = accounts.find(a => a.name === fromAccount);
+        const toAcc = accounts.find(a => a.name === toAccount);
+        
+        if (!fromAcc || !toAcc) {
+            console.warn(`Transfer account(s) not found: ${fromAccount} or ${toAccount}. Skipping balance update.`);
+            return;
+        }
+        
+        console.log('Current balances:', {from: fromAcc.balance, to: toAcc.balance});
+        
+        let newFromBalance, newToBalance;
+        const fromBalance = parseFloat(fromAcc.balance) || 0;
+        const toBalance = parseFloat(toAcc.balance) || 0;
+        
+        if (operation === 'add') {
+            newFromBalance = fromBalance - transactionAmount;
+            newToBalance = toBalance + transactionAmount;
+        } else {
+            // Reverse: add back to source, subtract from destination
+            newFromBalance = fromBalance + transactionAmount;
+            newToBalance = toBalance - transactionAmount;
+        }
+        
+        console.log('New balances:', {from: newFromBalance, to: newToBalance});
+        
+        // Update BOTH accounts in parallel using Promise.all
+        const [result1, result2] = await Promise.all([
+            supabase
+                .from('accounts')
+                .update({ balance: newFromBalance })
+                .eq('name', fromAccount),
+            supabase
+                .from('accounts')
+                .update({ balance: newToBalance })
+                .eq('name', toAccount)
+        ]);
+        
+        if (result1.error) {
+            console.error('Error updating from account:', result1.error);
+            throw result1.error;
+        }
+        
+        if (result2.error) {
+            console.error('Error updating to account:', result2.error);
+            throw result2.error;
+        }
+        
+        console.log('Both accounts updated successfully');
+        
+    } catch (err) {
+        console.error('Error updating account balances for transfer:', err);
+        throw err;
+    }
+}
+
+
 
 // ==========================================
 // DATA LOADING FUNCTIONS
@@ -273,28 +500,27 @@ async function populateAccountsDropdowns() {
         const { data, error } = await supabase
             .from('accounts')
             .select('name, type')
-            // Remove the .eq('type', 'asset') filter
             .order('name', { ascending: true });
         
         if (error) throw error;
         
         const accountSelect = document.getElementById('account');
-        if (!accountSelect) return;
+        const transferToSelect = document.getElementById('transferToAccount');
         
         if (!data || data.length === 0) {
-            accountSelect.innerHTML = '<option value="">No accounts available</option>';
+            if (accountSelect) accountSelect.innerHTML = '<option value="">No accounts available</option>';
+            if (transferToSelect) transferToSelect.innerHTML = '<option value="">No accounts available</option>';
             return;
         }
         
-        accountSelect.innerHTML = '<option value="">Select Account</option>' +
+        const options = '<option value="">Select Account</option>' +
             data.map(acc => `<option value="${acc.name}">${acc.name}</option>`).join('');
+        
+        if (accountSelect) accountSelect.innerHTML = options;
+        if (transferToSelect) transferToSelect.innerHTML = options;
         
     } catch (err) {
         console.error("Error fetching accounts:", err);
-        const accountSelect = document.getElementById('account');
-        if (accountSelect) {
-            accountSelect.innerHTML = '<option value="">Error loading accounts</option>';
-        }
     }
 }
 
@@ -334,7 +560,8 @@ function renderTransactions() {
     const filtered = transactions.filter(t => {
         return t.merchant.toLowerCase().includes(searchTerm) ||
                (t.category && t.category.toLowerCase().includes(searchTerm)) ||
-               (t.account && t.account.toLowerCase().includes(searchTerm));
+               (t.account && t.account.toLowerCase().includes(searchTerm)) ||
+               (t.transfer_to_account && t.transfer_to_account.toLowerCase().includes(searchTerm));
     });
 
     if (filtered.length === 0) {
@@ -346,8 +573,18 @@ function renderTransactions() {
         const [year, month, day] = t.day.split('-').map(Number);
         const date = new Date(Date.UTC(year, month - 1, day));
         const formattedDate = date.toLocaleDateString(undefined, { timeZone: 'UTC' });
-        const type = t.type === 'income' ? 'income' : 'expense';
-        const icon = type === 'income' ? 'plus' : 'minus';
+        
+        let type, icon, accountInfo;
+        
+        if (t.type === 'transfer') {
+            type = 'transfer';
+            icon = 'arrow-right-left';
+            accountInfo = `${t.account} → ${t.transfer_to_account}`;
+        } else {
+            type = t.type === 'income' ? 'income' : 'expense';
+            icon = type === 'income' ? 'plus' : 'minus';
+            accountInfo = t.account || 'No account';
+        }
 
         return `
             <li class="transaction-item" data-id="${t.id}">
@@ -356,7 +593,7 @@ function renderTransactions() {
                 </div>
                 <div class="transaction-details">
                     <div class="name">${t.merchant}</div>
-                    <div class="category">${t.account || 'No account'}</div>
+                    <div class="category">${accountInfo}</div>
                 </div>
                 <div class="transaction-info">
                     <div class="amount ${type}">${formatCurrency(t.amount)}</div>

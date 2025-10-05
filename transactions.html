@@ -29,8 +29,18 @@
                         <div class="form-group">
                             <label for="type">Type</label>
                             <div class="type-toggle">
-                                <button type="button" class="toggle-btn active" data-type="expense">Expense</button>
-                                <button type="button" class="toggle-btn" data-type="income">Income</button>
+                                <button type="button" class="toggle-btn active" data-type="expense">
+                                    <i data-lucide="arrow-up"></i>
+                                    Expense
+                                </button>
+                                <button type="button" class="toggle-btn" data-type="income">
+                                    <i data-lucide="arrow-down"></i>
+                                    Income
+                                </button>
+                                <button type="button" class="toggle-btn" data-type="transfer">
+                                    <i data-lucide="arrow-right-left"></i>
+                                    Transfer
+                                </button>
                             </div>
                             <input type="hidden" id="type" value="expense">
                         </div>
@@ -45,17 +55,28 @@
                                 <input type="number" id="amount" placeholder="0.00" step="0.01" required>
                             </div>
                         </div>
-                         <div class="form-group">
+                        <div class="form-group">
                             <label for="day">Date</label>
                             <input type="date" id="day" required>
                         </div>
-                        <div class="form-group">
+                        <div class="form-group" id="categoryGroup">
                             <label for="category">Category</label>
                             <select id="category" required></select>
                         </div>
                         <div class="form-group">
-                            <label for="account">Account</label>
+                            <label for="account">
+                                <span id="accountLabel">Account</span>
+                            </label>
                             <select id="account" required></select>
+                        </div>
+                        <div class="form-group" id="transferToAccountGroup" style="display: none;">
+                            <label for="transferToAccount">
+                                <i data-lucide="arrow-right"></i>
+                                Transfer To
+                            </label>
+                            <select id="transferToAccount">
+                                <option value="">Select Destination Account</option>
+                            </select>
                         </div>
                         <div class="form-group checkbox-group">
                              <input type="checkbox" id="recurring">
@@ -91,7 +112,7 @@
             <div class="modal-body">
                 <form id="editForm">
                     <input type="hidden" id="edit-id">
-                    </form>
+                </form>
             </div>
         </div>
     </div>

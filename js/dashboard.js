@@ -5,6 +5,9 @@
 // ==========================================
 
 let isInitialized = false;
+let spendingChartInstance = null;
+let trendChartInstance = null;
+let budgetVsActualChartInstance = null;
 
 // ==========================================
 // INITIALIZATION
@@ -14,7 +17,7 @@ async function initializeDashboard() {
     const user = await requireAuth();
     if (!user) return;
 
-    // Wait for MonthNavigation to be ready (it's initialized by monthNavigation.js)
+    // Wait for MonthNavigation to be ready
     if (!MonthNavigation.currentMonth) {
         MonthNavigation.init();
     }
@@ -23,6 +26,9 @@ async function initializeDashboard() {
     if (!isInitialized) {
         isInitialized = true;
     }
+    
+    // Update greeting based on time of day
+    updateGreeting();
     
     // Load dashboard data for current month
     await loadDashboardData();
@@ -52,7 +58,9 @@ async function loadDashboardData() {
             loadNetWorth(),
             loadSpendingAndBudgetData(),
             loadRecentTransactions(),
-            loadRecurringPayments()
+            loadRecurringPayments(),
+            renderSpendingTrendChart(),      // NEW
+            renderBudgetVsActualChart()      // NEW
         ]);
         
         // Initialize Lucide icons
@@ -80,6 +88,24 @@ async function loadBudget(monthKey) {
         income: budgetData.income || 0,
         categories: budgetData.categories || budgetData.expenses || []
     };
+}
+
+function updateGreeting() {
+    const greetingEl = document.getElementById('greeting');
+    if (!greetingEl) return;
+    
+    const hour = new Date().getHours();
+    let greeting;
+    
+    if (hour < 12) {
+        greeting = 'Good Morning';
+    } else if (hour < 18) {
+        greeting = 'Good Afternoon';
+    } else {
+        greeting = 'Good Evening';
+    }
+    
+    greetingEl.textContent = greeting;
 }
 
 async function loadNetWorth() {
@@ -256,8 +282,6 @@ async function loadRecurringPayments() {
 // CHART RENDERING
 // ==========================================
 
-let spendingChartInstance = null;
-
 function renderSpendingChart(expenses) {
     const canvas = document.getElementById('spendingChart');
     if (!canvas) return;
@@ -345,6 +369,190 @@ function displayTopExpenses(expenses) {
     `).join('');
     
     lucide.createIcons();
+}
+
+// ==========================================
+// NEW CHARTS
+// ==========================================
+
+async function renderSpendingTrendChart() {
+    const canvas = document.getElementById('spendingTrendChart');
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
+    
+    // Destroy previous chart
+    if (trendChartInstance) {
+        trendChartInstance.destroy();
+    }
+    
+    // Get last 6 months of data
+    const months = [];
+    const now = new Date();
+    
+    for (let i = 5; i >= 0; i--) {
+        const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        months.push({
+            key: monthKey,
+            label: date.toLocaleDateString('default', { month: 'short', year: 'numeric' })
+        });
+    }
+    
+    // Fetch transactions for each month
+    const spendingData = await Promise.all(
+        months.map(async (month) => {
+            const { data, error } = await supabase
+                .from('transactions')
+                .select('amount')
+                .eq('month_key', month.key)
+                .eq('type', 'expense');
+            
+            if (error) {
+                console.error('Error fetching trend data:', error);
+                return 0;
+            }
+            
+            return data.reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0);
+        })
+    );
+    
+    trendChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: months.map(m => m.label),
+            datasets: [{
+                label: 'Total Spending',
+                data: spendingData,
+                borderColor: '#f97316',
+                backgroundColor: 'rgba(249, 115, 22, 0.1)',
+                tension: 0.4,
+                fill: true,
+                pointBackgroundColor: '#f97316',
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2,
+                pointRadius: 5,
+                pointHoverRadius: 7
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        label: (context) => {
+                            return `Spending: ${formatCurrency(context.raw)}`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: (value) => formatCurrency(value)
+                    }
+                }
+            }
+        }
+    });
+}
+
+async function renderBudgetVsActualChart() {
+    const canvas = document.getElementById('budgetVsActualChart');
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
+    
+    // Destroy previous chart
+    if (budgetVsActualChartInstance) {
+        budgetVsActualChartInstance.destroy();
+    }
+    
+    // Get budget and transactions for current month
+    const budgetInfo = await loadBudget(MonthNavigation.currentMonth);
+    const { data: transactions, error } = await supabase
+        .from('transactions')
+        .select('amount, category')
+        .eq('month_key', MonthNavigation.currentMonth)
+        .eq('type', 'expense');
+    
+    if (error) {
+        console.error('Error fetching budget vs actual data:', error);
+        return;
+    }
+    
+    // Calculate actual spending by category
+    const actualByCategory = transactions.reduce((acc, t) => {
+        const category = t.category || 'Uncategorized';
+        acc[category] = (acc[category] || 0) + (parseFloat(t.amount) || 0);
+        return acc;
+    }, {});
+    
+    // Prepare data
+    const categories = budgetInfo.categories || [];
+    const labels = categories.map(c => c.name);
+    const budgeted = categories.map(c => parseFloat(c.budgeted) || 0);
+    const actual = categories.map(c => actualByCategory[c.name] || 0);
+    
+    // Update month display
+    const monthDisplay = document.getElementById('budgetVsActualMonth');
+    if (monthDisplay) {
+        const [year, month] = MonthNavigation.currentMonth.split('-').map(Number);
+        const date = new Date(year, month - 1);
+        monthDisplay.textContent = date.toLocaleDateString('default', { month: 'long', year: 'numeric' });
+    }
+    
+    budgetVsActualChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'Budgeted',
+                    data: budgeted,
+                    backgroundColor: '#e2e8f0',
+                    borderRadius: 6
+                },
+                {
+                    label: 'Actual',
+                    data: actual,
+                    backgroundColor: '#f97316',
+                    borderRadius: 6
+                }
+            ]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top'
+                },
+                tooltip: {
+                    callbacks: {
+                        label: (context) => {
+                            return `${context.dataset.label}: ${formatCurrency(context.raw)}`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: (value) => formatCurrency(value)
+                    }
+                }
+            }
+        }
+    });
 }
 
 // ==========================================

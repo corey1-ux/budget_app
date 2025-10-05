@@ -202,3 +202,12 @@ body {
 .action-btn:hover { color: var(--text-primary); }
 .list-item-empty p { text-align: center; padding: 2rem; color: #64748b; }
 @media (max-width: 992px) { .content-grid { grid-template-columns: 1fr; } }
+
+.transaction-icon.transfer {
+    background-color: #dbeafe;
+    color: #3b82f6;
+}
+
+.amount.transfer {
+    color: #3b82f6;
+}

@@ -200,12 +200,47 @@ async function handleFormSubmit(e) {
 
 async function handleDelete() {
     const accountId = document.getElementById('accountId').value;
+    const accountName = document.getElementById('accountName').value;
     
-    if (!accountId || !confirm('Are you sure you want to delete this account? This action cannot be undone.')) {
-        return;
-    }
+    if (!accountId) return;
 
     try {
+        // Check if account has transactions
+        const { data: transactions, error: checkError } = await supabase
+            .from('transactions')
+            .select('id')
+            .or(`account.eq.${accountName},transfer_to_account.eq.${accountName}`);
+        
+        if (checkError) throw checkError;
+        
+        const transactionCount = transactions?.length || 0;
+        
+        // Build confirmation message
+        let confirmMessage = `Are you sure you want to delete "${accountName}"?`;
+        
+        if (transactionCount > 0) {
+            confirmMessage = `This account has ${transactionCount} associated transaction(s).\n\n` +
+                           `Deleting "${accountName}" will also delete all ${transactionCount} transaction(s).\n\n` +
+                           `This action cannot be undone. Are you sure?`;
+        } else {
+            confirmMessage += '\n\nThis action cannot be undone.';
+        }
+        
+        if (!confirm(confirmMessage)) {
+            return;
+        }
+        
+        // Delete associated transactions first
+        if (transactionCount > 0) {
+            const { error: deleteTransError } = await supabase
+                .from('transactions')
+                .delete()
+                .or(`account.eq.${accountName},transfer_to_account.eq.${accountName}`);
+            
+            if (deleteTransError) throw deleteTransError;
+        }
+        
+        // Delete account
         const { error } = await supabase
             .from('accounts')
             .delete()
@@ -446,10 +481,11 @@ async function loadAccountTransactions(account) {
     try {
         // Check cache first
         if (!allTransactions[account.name]) {
+            // Fetch transactions where this account is EITHER the source OR destination
             const { data, error } = await supabase
                 .from('transactions')
                 .select('*')
-                .eq('account', account.name)
+                .or(`account.eq.${account.name},transfer_to_account.eq.${account.name}`)
                 .order('day', { ascending: false });
             
             if (error) throw error;
@@ -459,7 +495,7 @@ async function loadAccountTransactions(account) {
         
         const transactions = allTransactions[account.name];
         
-        console.log('Loading transactions for account:', account.name, 'Count:', transactions.length); // DEBUG
+        console.log('Loading transactions for account:', account.name, 'Count:', transactions.length);
         
         // Render transactions
         if (transactions.length === 0) {
@@ -477,8 +513,26 @@ async function loadAccountTransactions(account) {
                 year: 'numeric'
             });
             
-            const type = t.type === 'income' ? 'income' : 'expense';
-            const icon = type === 'income' ? 'arrow-down-circle' : 'arrow-up-circle';
+            let type, icon, displayText;
+            
+            // Determine how to display this transaction from this account's perspective
+            if (t.type === 'transfer') {
+                if (t.account === account.name) {
+                    // Money leaving this account
+                    type = 'expense';
+                    icon = 'arrow-up-circle';
+                    displayText = `Transfer to ${t.transfer_to_account}`;
+                } else {
+                    // Money coming into this account
+                    type = 'income';
+                    icon = 'arrow-down-circle';
+                    displayText = `Transfer from ${t.account}`;
+                }
+            } else {
+                type = t.type === 'income' ? 'income' : 'expense';
+                icon = type === 'income' ? 'arrow-down-circle' : 'arrow-up-circle';
+                displayText = t.merchant;
+            }
             
             return `
                 <li class="account-transaction-item" data-transaction-id="${t.id}">
@@ -487,7 +541,7 @@ async function loadAccountTransactions(account) {
                             <i data-lucide="${icon}"></i>
                         </div>
                         <div class="transaction-details-text">
-                            <div class="transaction-merchant">${t.merchant}</div>
+                            <div class="transaction-merchant">${displayText}</div>
                             <div class="transaction-category">${t.category || 'Uncategorized'}</div>
                         </div>
                     </div>
@@ -505,25 +559,14 @@ async function loadAccountTransactions(account) {
         // Add click handlers AFTER rendering
         setTimeout(() => {
             const transactionItems = transactionsListEl.querySelectorAll('.account-transaction-item');
-            console.log('Attaching click handlers to', transactionItems.length, 'items'); // DEBUG
             
-            transactionItems.forEach((item, index) => {
-                console.log('Attaching handler to item', index, item); // DEBUG
+            transactionItems.forEach((item) => {
                 item.addEventListener('click', (e) => {
-                    console.log('TRANSACTION CLICKED!', e.target); // DEBUG
                     const transactionId = item.dataset.transactionId;
-                    console.log('Transaction ID from dataset:', transactionId, typeof transactionId); // DEBUG
-                    console.log('Sample transaction ID from array:', transactions[0]?.id, typeof transactions[0]?.id); // DEBUG
-                    
-                    // Find transaction - convert string to match database type if needed
                     const transaction = transactions.find(t => String(t.id) === String(transactionId));
-                    console.log('Found transaction:', transaction); // DEBUG
                     
                     if (transaction) {
                         openTransactionEditModal(transaction, account);
-                    } else {
-                        console.error('Transaction not found!'); // DEBUG
-                        console.log('All transaction IDs:', transactions.map(t => t.id)); // DEBUG
                     }
                 });
             });
@@ -534,7 +577,6 @@ async function loadAccountTransactions(account) {
         transactionsListEl.innerHTML = '<li class="no-transactions">Failed to load transactions</li>';
     }
 }
-
 // ==========================================
 // TRANSACTION EDIT MODAL
 // ==========================================
@@ -656,7 +698,18 @@ async function handleTransactionFormSubmit(e) {
     e.preventDefault();
     
     const transactionId = document.getElementById('transactionId').value;
-    const transactionData = {
+    
+    // Get old transaction data
+    const expandedAccount = document.querySelector('.account-item.expanded');
+    const accountName = expandedAccount.querySelector('.account-details h4').textContent;
+    const oldTransaction = allTransactions[accountName]?.find(t => String(t.id) === String(transactionId));
+    
+    if (!oldTransaction) {
+        alert('Could not find original transaction');
+        return;
+    }
+    
+    const newTransactionData = {
         day: document.getElementById('transactionDay').value,
         merchant: document.getElementById('transactionMerchant').value,
         amount: parseFloat(document.getElementById('transactionAmount').value),
@@ -668,34 +721,62 @@ async function handleTransactionFormSubmit(e) {
     };
 
     try {
+        // Reverse old transaction's effect
+        if (oldTransaction.type === 'transfer') {
+            await updateAccountBalanceForTransfer(
+                oldTransaction.account,
+                oldTransaction.transfer_to_account,
+                oldTransaction.amount,
+                'reverse'
+            );
+        } else {
+            await updateAccountBalance(
+                oldTransaction.account,
+                oldTransaction.type,
+                oldTransaction.amount,
+                'reverse'
+            );
+        }
+        
+        // Update transaction in database
         const { error } = await supabase
             .from('transactions')
-            .update(transactionData)
+            .update(newTransactionData)
             .eq('id', transactionId);
 
         if (error) throw error;
+        
+        // Apply new transaction's effect
+        if (newTransactionData.type === 'transfer') {
+            await updateAccountBalanceForTransfer(
+                newTransactionData.account,
+                newTransactionData.transfer_to_account,
+                newTransactionData.amount,
+                'add'
+            );
+        } else {
+            await updateAccountBalance(
+                newTransactionData.account,
+                newTransactionData.type,
+                newTransactionData.amount,
+                'add'
+            );
+        }
 
         hideTransactionModal();
         
-        // Refresh the account that was expanded
-        const expandedAccount = document.querySelector('.account-item.expanded');
-        if (expandedAccount) {
-            const accountName = expandedAccount.querySelector('.account-details h4').textContent;
-            // Clear cache for this account
-            delete allTransactions[accountName];
-            // Reload transactions
-            const accounts = await supabase
-                .from('accounts')
-                .select('*')
-                .eq('name', accountName)
-                .single();
-            if (accounts.data) {
-                await loadAccountTransactions(accounts.data);
-                lucide.createIcons();
-            }
+        // Clear cache and reload
+        delete allTransactions[accountName];
+        const accounts = await supabase
+            .from('accounts')
+            .select('*')
+            .eq('name', accountName)
+            .single();
+        if (accounts.data) {
+            await loadAccountTransactions(accounts.data);
+            lucide.createIcons();
         }
         
-        // Also refresh the accounts list to update balances
         await fetchAndRenderAccounts();
         
     } catch (err) {
@@ -712,39 +793,207 @@ async function handleTransactionDelete() {
     }
 
     try {
+        const expandedAccount = document.querySelector('.account-item.expanded');
+        const accountName = expandedAccount.querySelector('.account-details h4').textContent;
+        const transaction = allTransactions[accountName]?.find(t => String(t.id) === String(transactionId));
+        
+        if (!transaction) {
+            throw new Error('Transaction not found');
+        }
+        
+        // DEBUG: Log transaction details
+        console.log('=== DELETING TRANSACTION ===');
+        console.log('Transaction type:', transaction.type);
+        console.log('Transaction account:', transaction.account);
+        console.log('Transfer to account:', transaction.transfer_to_account);
+        console.log('Amount:', transaction.amount);
+        console.log('Currently viewing account:', accountName);
+        
+        // Delete transaction from database
         const { error } = await supabase
             .from('transactions')
             .delete()
             .eq('id', transactionId);
             
         if (error) throw error;
+        
+        // Reverse the balance change based on transaction type
+        if (transaction.type === 'transfer') {
+            console.log('Calling updateAccountBalanceForTransfer with:', {
+                from: transaction.account,
+                to: transaction.transfer_to_account,
+                amount: transaction.amount,
+                operation: 'reverse'
+            });
+            
+            await updateAccountBalanceForTransfer(
+                transaction.account,
+                transaction.transfer_to_account,
+                transaction.amount,
+                'reverse'
+            );
+        } else {
+            await updateAccountBalance(
+                transaction.account,
+                transaction.type,
+                transaction.amount,
+                'reverse'
+            );
+        }
 
         hideTransactionModal();
         
-        // Refresh the account that was expanded
-        const expandedAccount = document.querySelector('.account-item.expanded');
-        if (expandedAccount) {
-            const accountName = expandedAccount.querySelector('.account-details h4').textContent;
-            // Clear cache for this account
-            delete allTransactions[accountName];
-            // Reload transactions
-            const accounts = await supabase
-                .from('accounts')
-                .select('*')
-                .eq('name', accountName)
-                .single();
-            if (accounts.data) {
-                await loadAccountTransactions(accounts.data);
-                lucide.createIcons();
-            }
+        // Clear cache and reload
+        delete allTransactions[accountName];
+        const { data: accountData } = await supabase
+            .from('accounts')
+            .select('*')
+            .eq('name', accountName)
+            .single();
+            
+        if (accountData) {
+            await loadAccountTransactions(accountData);
+            lucide.createIcons();
         }
         
-        // Also refresh the accounts list to update balances
         await fetchAndRenderAccounts();
         
     } catch (err) {
         console.error('Error deleting transaction:', err);
         alert('Failed to delete transaction.');
+    }
+}
+
+async function updateAccountBalance(accountName, transactionType, amount, operation) {
+    try {
+        // Get current account balance and type
+        const { data: account, error: fetchError } = await supabase
+            .from('accounts')
+            .select('balance, type')
+            .eq('name', accountName)
+            .single();
+
+        if (fetchError) throw fetchError;
+
+        const currentBalance = parseFloat(account.balance) || 0;
+        const transactionAmount = parseFloat(amount) || 0;
+        const isDebtAccount = account.type === 'debt';
+        let newBalance;
+
+        if (operation === 'add') {
+            // Adding a transaction
+            if (isDebtAccount) {
+                // For debt accounts: expense increases debt, income decreases debt
+                if (transactionType === 'income') {
+                    newBalance = currentBalance - transactionAmount;
+                } else {
+                    newBalance = currentBalance + transactionAmount;
+                }
+            } else {
+                // For asset accounts: income increases balance, expense decreases balance
+                if (transactionType === 'income') {
+                    newBalance = currentBalance + transactionAmount;
+                } else {
+                    newBalance = currentBalance - transactionAmount;
+                }
+            }
+        } else {
+            // Reversing a transaction (just flip the operations)
+            if (isDebtAccount) {
+                if (transactionType === 'income') {
+                    newBalance = currentBalance + transactionAmount;
+                } else {
+                    newBalance = currentBalance - transactionAmount;
+                }
+            } else {
+                if (transactionType === 'income') {
+                    newBalance = currentBalance - transactionAmount;
+                } else {
+                    newBalance = currentBalance + transactionAmount;
+                }
+            }
+        }
+
+        // Update account balance
+        const { error: updateError } = await supabase
+            .from('accounts')
+            .update({ balance: newBalance })
+            .eq('name', accountName);
+
+        if (updateError) throw updateError;
+        
+    } catch (err) {
+        console.error('Error updating account balance:', err);
+        throw err;
+    }
+}
+
+async function updateAccountBalanceForTransfer(fromAccount, toAccount, amount, operation) {
+    try {
+        const transactionAmount = parseFloat(amount) || 0;
+        
+        console.log('Transfer balance update:', {fromAccount, toAccount, amount, operation});
+        
+        // Get both accounts
+        const { data: accounts, error: fetchError } = await supabase
+            .from('accounts')
+            .select('name, balance, type')
+            .in('name', [fromAccount, toAccount]);
+
+        if (fetchError) throw fetchError;
+        
+        const fromAcc = accounts.find(a => a.name === fromAccount);
+        const toAcc = accounts.find(a => a.name === toAccount);
+        
+        if (!fromAcc || !toAcc) {
+            console.warn(`Transfer account(s) not found: ${fromAccount} or ${toAccount}. Skipping balance update.`);
+            return;
+        }
+        
+        console.log('Current balances:', {from: fromAcc.balance, to: toAcc.balance});
+        
+        let newFromBalance, newToBalance;
+        const fromBalance = parseFloat(fromAcc.balance) || 0;
+        const toBalance = parseFloat(toAcc.balance) || 0;
+        
+        if (operation === 'add') {
+            newFromBalance = fromBalance - transactionAmount;
+            newToBalance = toBalance + transactionAmount;
+        } else {
+            // Reverse: add back to source, subtract from destination
+            newFromBalance = fromBalance + transactionAmount;
+            newToBalance = toBalance - transactionAmount;
+        }
+        
+        console.log('New balances:', {from: newFromBalance, to: newToBalance});
+        
+        // Update BOTH accounts in parallel using Promise.all
+        const [result1, result2] = await Promise.all([
+            supabase
+                .from('accounts')
+                .update({ balance: newFromBalance })
+                .eq('name', fromAccount),
+            supabase
+                .from('accounts')
+                .update({ balance: newToBalance })
+                .eq('name', toAccount)
+        ]);
+        
+        if (result1.error) {
+            console.error('Error updating from account:', result1.error);
+            throw result1.error;
+        }
+        
+        if (result2.error) {
+            console.error('Error updating to account:', result2.error);
+            throw result2.error;
+        }
+        
+        console.log('Both accounts updated successfully');
+        
+    } catch (err) {
+        console.error('Error updating account balances for transfer:', err);
+        throw err;
     }
 }
 

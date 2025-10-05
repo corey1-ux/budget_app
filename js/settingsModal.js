@@ -86,7 +86,7 @@ function initAccountForms() {
     const changeEmailForm = document.getElementById('changeEmailForm');
     const changePasswordForm = document.getElementById('changePasswordForm');
     const emailNotifications = document.getElementById('emailNotifications');
-    const deleteAccountBtn = document.getElementById('deleteAccountBtn');
+    const deleteAccountBtn = document.getElementById('deleteUserAccountBtn');
     
     // Change Email
     if (changeEmailForm) {
@@ -173,7 +173,7 @@ function initAccountForms() {
     }
     
     // Delete Account
-    if (deleteAccountBtn) {
+    if (deleteUserAccountBtn) {
         deleteAccountBtn.addEventListener('click', function() {
             alert('Account deletion is a server-side operation and has not been implemented in this version.');
             // NOTE: To implement this, you would need a Supabase Edge Function

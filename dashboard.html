@@ -114,6 +114,27 @@
                 </div>
             </div>
         </div>
+
+        <!-- NEW CHARTS -->
+        <div class="card chart-card">
+            <div class="card-header">
+                <div class="card-icon"><i data-lucide="trending-up"></i></div>
+                <h3>Spending Trend (Last 6 Months)</h3>
+            </div>
+            <div class="card-body chart-container-large">
+                <canvas id="spendingTrendChart"></canvas>
+            </div>
+        </div>
+
+        <div class="card chart-card">
+            <div class="card-header">
+                <div class="card-icon"><i data-lucide="bar-chart-3"></i></div>
+                <h3>Budget vs Actual - <span id="budgetVsActualMonth">Current Month</span></h3>
+            </div>
+            <div class="card-body chart-container-large">
+                <canvas id="budgetVsActualChart"></canvas>
+            </div>
+        </div>
     </main>
     
     <script src="js/supabaseClient.js"></script>
