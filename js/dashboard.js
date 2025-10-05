@@ -1,6 +1,12 @@
 // js/dashboard.js
 
 // ==========================================
+// STATE MANAGEMENT
+// ==========================================
+
+let isInitialized = false;
+
+// ==========================================
 // INITIALIZATION
 // ==========================================
 
@@ -8,77 +14,72 @@ async function initializeDashboard() {
     const user = await requireAuth();
     if (!user) return;
 
-    setGreeting(user);
-    
-    // Set up event listeners for month changes
-    window.addEventListener('monthChanged', handleMonthChange);
-    window.addEventListener('monthNavReady', handleMonthChange);
-    
-    // Load data immediately if month is already available
-    if (MonthNavigation.currentMonth) {
-        loadAllDashboardData();
+    // Wait for MonthNavigation to be ready (it's initialized by monthNavigation.js)
+    if (!MonthNavigation.currentMonth) {
+        MonthNavigation.init();
     }
-}
 
-function handleMonthChange() {
-    if (MonthNavigation.currentMonth) {
-        loadAllDashboardData();
+    // Set up event listeners (only once)
+    if (!isInitialized) {
+        isInitialized = true;
     }
-}
-
-async function loadAllDashboardData() {
-    // Add stagger animation to cards
-    document.querySelectorAll('.card').forEach((card, index) => {
-        card.style.animationDelay = `${index * 0.05}s`;
-    });
     
-    // Initialize Lucide icons
-    lucide.createIcons();
-    
-    // Load all dashboard data in parallel for better performance
-    await Promise.all([
-        loadNetWorth(),
-        loadSpendingAndBudgetData(),
-        loadRecentTransactions(),
-        loadRecurringPayments()
-    ]);
+    // Load dashboard data for current month
+    await loadDashboardData();
 }
 
 // ==========================================
-// PAGE LIFECYCLE EVENT LISTENERS
+// PAGE LIFECYCLE
 // ==========================================
 
 window.addEventListener('DOMContentLoaded', initializeDashboard);
 
-// Handle back/forward button (bfcache)
 window.addEventListener('pageshow', (event) => {
     if (event.persisted) {
+        isInitialized = false;
         initializeDashboard();
     }
 });
 
 // ==========================================
-// DATA LOADING FUNCTIONS
+// DATA LOADING
 // ==========================================
 
-function setGreeting(user) {
-    const hour = new Date().getHours();
-    let greeting;
+async function loadDashboardData() {
+    try {
+        // Load all dashboard data
+        await Promise.all([
+            loadNetWorth(),
+            loadSpendingAndBudgetData(),
+            loadRecentTransactions(),
+            loadRecurringPayments()
+        ]);
+        
+        // Initialize Lucide icons
+        lucide.createIcons();
+        
+    } catch (err) {
+        console.error('Error loading dashboard data:', err);
+    }
+}
+
+async function loadBudget(monthKey) {
+    const { data, error } = await supabase
+        .from('budgets')
+        .select('data')
+        .eq('month_key', monthKey)
+        .single();
     
-    if (hour < 12) {
-        greeting = 'Good Morning';
-    } else if (hour < 18) {
-        greeting = 'Good Afternoon';
-    } else {
-        greeting = 'Good Evening';
+    if (error && error.code !== 'PGRST116') { // PGRST116 = no rows
+        console.error('Error loading budget:', error);
     }
     
-    const displayName = user.user_metadata?.full_name || user.email.split('@')[0];
-    const greetingEl = document.getElementById('greeting');
-    
-    if (greetingEl) {
-        greetingEl.textContent = `${greeting}, ${displayName}`;
-    }
+    // Handle both old (expenses) and new (categories) structure
+    const budgetData = data?.data || {};
+    return {
+        income: budgetData.income || 0,
+        categories: budgetData.categories || budgetData.expenses || []
+    };
 }
 
 async function loadNetWorth() {
@@ -114,7 +115,7 @@ async function loadNetWorth() {
 async function loadSpendingAndBudgetData() {
     try {
         // Get budget information for current month
-        const budgetInfo = await BudgetData.getMonthData(MonthNavigation.currentMonth);
+        const budgetInfo = await loadBudget(MonthNavigation.currentMonth);
         const budgetedIncome = parseFloat(budgetInfo.income) || 0;
 
         // Get transactions for current month

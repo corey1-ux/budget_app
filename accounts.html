@@ -14,6 +14,7 @@
     <link rel="stylesheet" href="css/settingsModal.css">
 </head>
 <body>
+    <body>
     <main class="container">
         <div class="header">
             <h1>Accounts</h1>
@@ -131,6 +132,100 @@
                         <button type="button" class="btn-danger" id="deleteAccountBtn" style="display: none;">
                             <i data-lucide="trash-2"></i>
                             Delete Account
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+<!-- Transaction Edit Modal -->
+    <div class="modal-overlay" id="transactionModal">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h2 id="transactionModalTitle">Edit Transaction</h2>
+                <button class="modal-close" id="closeTransactionModalBtn">×</button>
+            </div>
+            <div class="modal-body">
+                <form id="transactionForm">
+                    <input type="hidden" id="transactionId">
+                    <input type="hidden" id="transactionMonthKey">
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="transactionDay">
+                                <i data-lucide="calendar"></i>
+                                Date
+                            </label>
+                            <input type="date" id="transactionDay" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="transactionType">
+                                <i data-lucide="arrow-right-left"></i>
+                                Type
+                            </label>
+                            <select id="transactionType" required>
+                                <option value="expense">Expense</option>
+                                <option value="income">Income</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="transactionMerchant">
+                            <i data-lucide="store"></i>
+                            Merchant/Description
+                        </label>
+                        <input type="text" id="transactionMerchant" placeholder="e.g., Starbucks" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="transactionAmount">
+                            <i data-lucide="dollar-sign"></i>
+                            Amount
+                        </label>
+                        <div class="input-with-icon">
+                            <span class="currency-symbol">$</span>
+                            <input type="number" id="transactionAmount" step="0.01" placeholder="0.00" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="transactionCategory">
+                            <i data-lucide="tag"></i>
+                            Category
+                        </label>
+                        <select id="transactionCategory">
+                            <option value="">Uncategorized</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="transactionAccount">
+                            <i data-lucide="wallet"></i>
+                            Account
+                        </label>
+                        <select id="transactionAccount" required>
+                            <option value="">Select Account</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="transactionRecurring">
+                            <span>Recurring Transaction</span>
+                        </label>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="submit" class="btn-primary" id="saveTransactionBtn">
+                            <i data-lucide="check"></i>
+                            Save Transaction
+                        </button>
+                        <button type="button" class="btn-danger" id="deleteTransactionBtn">
+                            <i data-lucide="trash-2"></i>
+                            Delete
                         </button>
                     </div>
                 </form>

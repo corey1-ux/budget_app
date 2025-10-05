@@ -157,61 +157,76 @@ function initNavbar() {
 }
 
 // Initialize month navigation in navbar
+// Initialize month navigation in navbar
 function initMonthNavInNavbar() {
-    const monthNavInline = document.getElementById('monthNavInline');
-    
-    // Only show month nav on specific pages
+    // Don't show month navigation on certain pages
     const currentPage = window.location.pathname.split('/').pop();
-    const pagesWithMonthNav = ['dashboard.html', 'budget.html', 'transactions.html'];
+    const pagesWithoutMonthNav = ['accounts.html', 'index.html', 'login.html', 'signup.html']; // REMOVED dashboard.html
     
-    if (pagesWithMonthNav.includes(currentPage) && monthNavInline) {
-        monthNavInline.style.display = 'flex';
-        
-        const prevMonthBtn = document.getElementById('prevMonth');
-        const nextMonthBtn = document.getElementById('nextMonth');
-        const goToCurrentMonthBtn = document.getElementById('goToCurrentMonth');
-        const monthDisplayEl = document.getElementById('currentMonthDisplay');
-        
-        if (!prevMonthBtn || !nextMonthBtn || !monthDisplayEl) {
-            console.error('Month nav elements not found');
-            return;
+    const monthNavContainer = document.getElementById('monthNavInline');
+    
+    if (pagesWithoutMonthNav.includes(currentPage)) {
+        // Hide month navigation on these pages
+        if (monthNavContainer) {
+            monthNavContainer.style.display = 'none';
         }
+        return; // Don't initialize month navigation
+    }
+    
+    // Show month navigation for other pages
+    if (monthNavContainer) {
+        monthNavContainer.style.display = 'flex';
+    }
+    
+    // Get elements
+    const prevMonthBtn = document.getElementById('prevMonth');
+    const nextMonthBtn = document.getElementById('nextMonth');
+    const monthDisplayEl = document.getElementById('currentMonthDisplay');
+    const goToCurrentMonthBtn = document.getElementById('goToCurrentMonth');
+    
+    if (!prevMonthBtn || !nextMonthBtn || !monthDisplayEl) {
+        console.error('Month navigation elements not found');
+        return;
+    }
+    
+    // Update month display
+    function updateMonthDisplay() {
+        if (typeof MonthNavigation === 'undefined') return;
         
-        // Update month display
-        function updateMonthDisplay() {
-            monthDisplayEl.textContent = MonthNavigation.getDisplayName(MonthNavigation.currentMonth);
-            
-            if (goToCurrentMonthBtn) {
-                if (MonthNavigation.isViewingCurrentMonth()) {
-                    goToCurrentMonthBtn.classList.add('hidden');
-                } else {
-                    goToCurrentMonthBtn.classList.remove('hidden');
-                }
-            }
-        }
-        
-        // Event listeners
-        prevMonthBtn.addEventListener('click', () => {
-            MonthNavigation.previousMonth();
-            updateMonthDisplay();
-            window.dispatchEvent(new CustomEvent('monthChanged'));
-        });
-        
-        nextMonthBtn.addEventListener('click', () => {
-            MonthNavigation.nextMonth();
-            updateMonthDisplay();
-            window.dispatchEvent(new CustomEvent('monthChanged'));
-        });
+        monthDisplayEl.textContent = MonthNavigation.getDisplayName(MonthNavigation.currentMonth);
         
         if (goToCurrentMonthBtn) {
-            goToCurrentMonthBtn.addEventListener('click', () => {
-                MonthNavigation.goToCurrent();
-                updateMonthDisplay();
-                window.dispatchEvent(new CustomEvent('monthChanged'));
-            });
+            if (MonthNavigation.isViewingCurrentMonth()) {
+                goToCurrentMonthBtn.classList.add('hidden');
+            } else {
+                goToCurrentMonthBtn.classList.remove('hidden');
+            }
         }
-        
-        // Initialize display
+    }
+    
+    // Event listeners
+    prevMonthBtn.addEventListener('click', () => {
+        MonthNavigation.previousMonth();
+        updateMonthDisplay();
+        window.dispatchEvent(new CustomEvent('monthChanged'));
+    });
+    
+    nextMonthBtn.addEventListener('click', () => {
+        MonthNavigation.nextMonth();
+        updateMonthDisplay();
+        window.dispatchEvent(new CustomEvent('monthChanged'));
+    });
+    
+    if (goToCurrentMonthBtn) {
+        goToCurrentMonthBtn.addEventListener('click', () => {
+            MonthNavigation.goToCurrent();
+            updateMonthDisplay();
+            window.dispatchEvent(new CustomEvent('monthChanged'));
+        });
+    }
+    
+    // Initialize
+    if (typeof MonthNavigation !== 'undefined') {
         MonthNavigation.init();
         updateMonthDisplay();
         

@@ -32,31 +32,59 @@ function setupEventListeners() {
     const accountForm = document.getElementById('accountForm');
     const deleteAccountBtn = document.getElementById('deleteAccountBtn');
     
-    // Show modal
+    // Transaction modal elements
+    const closeTransactionModalBtn = document.getElementById('closeTransactionModalBtn');
+    const transactionModal = document.getElementById('transactionModal');
+    const transactionForm = document.getElementById('transactionForm');
+    const deleteTransactionBtn = document.getElementById('deleteTransactionBtn');
+    
+    // Show account modal
     if (showAddAccountModalBtn) {
         showAddAccountModalBtn.addEventListener('click', () => showModal());
     }
     
-    // Close modal
+    // Close account modal
     if (closeAccountModalBtn) {
         closeAccountModalBtn.addEventListener('click', hideModal);
     }
     
-    // Close modal on overlay click
+    // Close account modal on overlay click
     if (accountModal) {
         accountModal.addEventListener('click', (e) => {
             if (e.target === accountModal) hideModal();
         });
     }
     
-    // Form submission
+    // Account form submission
     if (accountForm) {
         accountForm.addEventListener('submit', handleFormSubmit);
     }
     
-    // Delete button
+    // Delete account button
     if (deleteAccountBtn) {
         deleteAccountBtn.addEventListener('click', handleDelete);
+    }
+    
+    // Transaction modal - close button
+    if (closeTransactionModalBtn) {
+        closeTransactionModalBtn.addEventListener('click', hideTransactionModal);
+    }
+    
+    // Transaction modal - close on overlay click
+    if (transactionModal) {
+        transactionModal.addEventListener('click', (e) => {
+            if (e.target === transactionModal) hideTransactionModal();
+        });
+    }
+    
+    // Transaction form submission
+    if (transactionForm) {
+        transactionForm.addEventListener('submit', handleTransactionFormSubmit);
+    }
+    
+    // Delete transaction button
+    if (deleteTransactionBtn) {
+        deleteTransactionBtn.addEventListener('click', handleTransactionDelete);
     }
 }
 
@@ -117,6 +145,12 @@ function hideModal() {
     }
 }
 
+function hideTransactionModal() {
+    const transactionModal = document.getElementById('transactionModal');
+    if (transactionModal) {
+        transactionModal.classList.remove('active');
+    }
+}
 // ==========================================
 // EVENT HANDLERS
 // ==========================================
@@ -425,6 +459,8 @@ async function loadAccountTransactions(account) {
         
         const transactions = allTransactions[account.name];
         
+        console.log('Loading transactions for account:', account.name, 'Count:', transactions.length); // DEBUG
+        
         // Render transactions
         if (transactions.length === 0) {
             transactionsListEl.innerHTML = '<li class="no-transactions">No transactions yet</li>';
@@ -463,19 +499,35 @@ async function loadAccountTransactions(account) {
             `;
         }).join('');
         
-        // Add click handlers to transactions
-        const transactionItems = transactionsListEl.querySelectorAll('.account-transaction-item');
-        transactionItems.forEach(item => {
-            item.addEventListener('click', () => {
-                const transactionId = item.dataset.transactionId;
-                const transaction = transactions.find(t => t.id === transactionId);
-                if (transaction) {
-                    openTransactionEditModal(transaction, account);
-                }
-            });
-        });
-        
+        // Reinitialize Lucide icons first
         lucide.createIcons();
+        
+        // Add click handlers AFTER rendering
+        setTimeout(() => {
+            const transactionItems = transactionsListEl.querySelectorAll('.account-transaction-item');
+            console.log('Attaching click handlers to', transactionItems.length, 'items'); // DEBUG
+            
+            transactionItems.forEach((item, index) => {
+                console.log('Attaching handler to item', index, item); // DEBUG
+                item.addEventListener('click', (e) => {
+                    console.log('TRANSACTION CLICKED!', e.target); // DEBUG
+                    const transactionId = item.dataset.transactionId;
+                    console.log('Transaction ID from dataset:', transactionId, typeof transactionId); // DEBUG
+                    console.log('Sample transaction ID from array:', transactions[0]?.id, typeof transactions[0]?.id); // DEBUG
+                    
+                    // Find transaction - convert string to match database type if needed
+                    const transaction = transactions.find(t => String(t.id) === String(transactionId));
+                    console.log('Found transaction:', transaction); // DEBUG
+                    
+                    if (transaction) {
+                        openTransactionEditModal(transaction, account);
+                    } else {
+                        console.error('Transaction not found!'); // DEBUG
+                        console.log('All transaction IDs:', transactions.map(t => t.id)); // DEBUG
+                    }
+                });
+            });
+        }, 50);
         
     } catch (err) {
         console.error('Error loading transactions:', err);
@@ -483,15 +535,219 @@ async function loadAccountTransactions(account) {
     }
 }
 
-// Add this new function for editing transactions
-function openTransactionEditModal(transaction, account) {
-    // For now, just redirect to transactions page with a plan to add edit modal later
-    // You could also build an edit modal here similar to the account modal
-    alert(`Edit transaction: ${transaction.merchant}\nAmount: ${formatCurrency(transaction.amount)}\n\nTransaction editing will open a modal here. For now, please use the Transactions page to edit.`);
+// ==========================================
+// TRANSACTION EDIT MODAL
+// ==========================================
+
+async function openTransactionEditModal(transaction, account) {
+    console.log('=== openTransactionEditModal CALLED ==='); // DEBUG
+    console.log('Transaction:', transaction); // DEBUG
+    console.log('Account:', account); // DEBUG
     
-    // Optional: Navigate to transactions page
-    // window.location.href = 'transactions.html';
+    const transactionModal = document.getElementById('transactionModal');
+    const transactionForm = document.getElementById('transactionForm');
+    
+    console.log('Modal element found:', !!transactionModal); // DEBUG
+    console.log('Form element found:', !!transactionForm); // DEBUG
+    
+    if (!transactionModal || !transactionForm) {
+        console.error('Modal or form not found!'); // DEBUG
+        return;
+    }
+    
+    console.log('Populating form...'); // DEBUG
+    
+    // Populate form with transaction data
+    document.getElementById('transactionId').value = transaction.id;
+    document.getElementById('transactionMonthKey').value = transaction.month_key;
+    document.getElementById('transactionDay').value = transaction.day;
+    document.getElementById('transactionMerchant').value = transaction.merchant;
+    document.getElementById('transactionAmount').value = parseFloat(transaction.amount);
+    document.getElementById('transactionType').value = transaction.type;
+    document.getElementById('transactionRecurring').checked = transaction.recurring || false;
+    
+    console.log('Loading dropdowns...'); // DEBUG
+    
+    // Load and populate accounts dropdown
+    await loadAccountsDropdown(transaction.account);
+    
+    // Load and populate categories dropdown
+    await loadCategoriesDropdown(transaction.category);
+    
+    console.log('Showing modal...'); // DEBUG
+    
+    // Show modal
+    transactionModal.classList.add('active');
+    
+    console.log('Modal classes:', transactionModal.className); // DEBUG
+    
+    // Initialize Lucide icons
+    setTimeout(() => {
+        lucide.createIcons();
+    }, 10);
 }
+
+async function loadAccountsDropdown(selectedAccount = '') {
+    try {
+        const { data: accounts, error } = await supabase
+            .from('accounts')
+            .select('name')
+            .order('name', { ascending: true });
+        
+        if (error) throw error;
+        
+        const accountSelect = document.getElementById('transactionAccount');
+        if (!accountSelect) return;
+        
+        accountSelect.innerHTML = '<option value="">Select Account</option>';
+        
+        accounts.forEach(account => {
+            const option = document.createElement('option');
+            option.value = account.name;
+            option.textContent = account.name;
+            if (account.name === selectedAccount) {
+                option.selected = true;
+            }
+            accountSelect.appendChild(option);
+        });
+    } catch (err) {
+        console.error('Error loading accounts:', err);
+    }
+}
+
+async function loadCategoriesDropdown(selectedCategory = '') {
+    try {
+        const transactionMonthKey = document.getElementById('transactionMonthKey').value;
+        
+        const { data: budgets, error } = await supabase
+            .from('budgets')
+            .select('data')
+            .eq('month_key', transactionMonthKey);
+        
+        if (error) {
+            console.error('Error loading budget:', error);
+        }
+        
+        const categorySelect = document.getElementById('transactionCategory');
+        if (!categorySelect) return;
+        
+        categorySelect.innerHTML = '<option value="">Uncategorized</option>';
+        
+        const budget = budgets && budgets.length > 0 ? budgets[0] : null;
+        const categories = budget?.data?.categories || [];
+        
+        if (categories && categories.length > 0) {
+            categories.forEach(cat => {
+                const option = document.createElement('option');
+                option.value = cat.name;
+                option.textContent = cat.name;
+                if (cat.name === selectedCategory) {
+                    option.selected = true;
+                }
+                categorySelect.appendChild(option);
+            });
+        }
+    } catch (err) {
+        console.error('Error loading categories:', err);
+    }
+}
+
+async function handleTransactionFormSubmit(e) {
+    e.preventDefault();
+    
+    const transactionId = document.getElementById('transactionId').value;
+    const transactionData = {
+        day: document.getElementById('transactionDay').value,
+        merchant: document.getElementById('transactionMerchant').value,
+        amount: parseFloat(document.getElementById('transactionAmount').value),
+        category: document.getElementById('transactionCategory').value || null,
+        account: document.getElementById('transactionAccount').value,
+        type: document.getElementById('transactionType').value,
+        recurring: document.getElementById('transactionRecurring').checked,
+        month_key: document.getElementById('transactionMonthKey').value
+    };
+
+    try {
+        const { error } = await supabase
+            .from('transactions')
+            .update(transactionData)
+            .eq('id', transactionId);
+
+        if (error) throw error;
+
+        hideTransactionModal();
+        
+        // Refresh the account that was expanded
+        const expandedAccount = document.querySelector('.account-item.expanded');
+        if (expandedAccount) {
+            const accountName = expandedAccount.querySelector('.account-details h4').textContent;
+            // Clear cache for this account
+            delete allTransactions[accountName];
+            // Reload transactions
+            const accounts = await supabase
+                .from('accounts')
+                .select('*')
+                .eq('name', accountName)
+                .single();
+            if (accounts.data) {
+                await loadAccountTransactions(accounts.data);
+                lucide.createIcons();
+            }
+        }
+        
+        // Also refresh the accounts list to update balances
+        await fetchAndRenderAccounts();
+        
+    } catch (err) {
+        console.error('Error updating transaction:', err);
+        alert('Failed to update transaction. Check the console for details.');
+    }
+}
+
+async function handleTransactionDelete() {
+    const transactionId = document.getElementById('transactionId').value;
+    
+    if (!transactionId || !confirm('Are you sure you want to delete this transaction? This action cannot be undone.')) {
+        return;
+    }
+
+    try {
+        const { error } = await supabase
+            .from('transactions')
+            .delete()
+            .eq('id', transactionId);
+            
+        if (error) throw error;
+
+        hideTransactionModal();
+        
+        // Refresh the account that was expanded
+        const expandedAccount = document.querySelector('.account-item.expanded');
+        if (expandedAccount) {
+            const accountName = expandedAccount.querySelector('.account-details h4').textContent;
+            // Clear cache for this account
+            delete allTransactions[accountName];
+            // Reload transactions
+            const accounts = await supabase
+                .from('accounts')
+                .select('*')
+                .eq('name', accountName)
+                .single();
+            if (accounts.data) {
+                await loadAccountTransactions(accounts.data);
+                lucide.createIcons();
+            }
+        }
+        
+        // Also refresh the accounts list to update balances
+        await fetchAndRenderAccounts();
+        
+    } catch (err) {
+        console.error('Error deleting transaction:', err);
+        alert('Failed to delete transaction.');
+    }
+}
+
 
 // ==========================================
 // UTILITY FUNCTIONS
