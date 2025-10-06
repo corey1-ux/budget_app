@@ -20,7 +20,6 @@
 body {
     font-family: 'Roboto', sans-serif;
     background-color: var(--bg-secondary);
-    padding-top: 80px;
 }
 
 .container {

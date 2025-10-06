@@ -179,14 +179,18 @@ function initMonthNavInNavbar() {
     const pagesWithoutMonthNav = ['accounts.html', 'index.html', 'login.html', 'signup.html']; // REMOVED dashboard.html
     
     const monthNavContainer = document.getElementById('monthNavInline');
+    const navbarTop = document.querySelector('.navbar-top');
     
     if (pagesWithoutMonthNav.includes(currentPage)) {
-        // Hide month navigation on these pages
-        if (monthNavContainer) {
-            monthNavContainer.style.display = 'none';
-        }
-        return; // Don't initialize month navigation
+    // Hide month navigation on these pages
+    if (monthNavContainer) {
+        monthNavContainer.style.display = 'none';
     }
+    if (navbarTop) {
+        navbarTop.classList.add('no-month-nav');
+    }
+    return; // Don't initialize month navigation
+}
     
     // Show month navigation for other pages
     if (monthNavContainer) {
