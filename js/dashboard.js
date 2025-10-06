@@ -1,4 +1,4 @@
-// js/dashboard.js
+// js/dashboard.js - Updated with auto-refresh
 
 // ==========================================
 // STATE MANAGEMENT
@@ -8,12 +8,15 @@ let isInitialized = false;
 let spendingChartInstance = null;
 let trendChartInstance = null;
 let budgetVsActualChartInstance = null;
+let isDataLoading = false; // Prevent concurrent loads
 
 // ==========================================
 // INITIALIZATION
 // ==========================================
 
 async function initializeDashboard() {
+    console.log('Initializing dashboard...');
+    
     const user = await requireAuth();
     if (!user) return;
 
@@ -24,26 +27,60 @@ async function initializeDashboard() {
 
     // Set up event listeners (only once)
     if (!isInitialized) {
+        setupEventListeners();
         isInitialized = true;
     }
     
-    // Update greeting based on time of day
-    updateGreeting();
+    // Always load fresh data
+    await loadDashboardData();
+}
+
+function setupEventListeners() {
+    console.log('Setting up event listeners...');
     
-    // Load dashboard data for current month
+    // Month navigation events
+    window.addEventListener('monthChanged', handleMonthChange);
+    window.addEventListener('monthNavReady', handleMonthChange);
+}
+
+async function handleMonthChange() {
+    console.log('Month changed, reloading data...');
     await loadDashboardData();
 }
 
 // ==========================================
-// PAGE LIFECYCLE
+// PAGE LIFECYCLE EVENT LISTENERS
 // ==========================================
 
-window.addEventListener('DOMContentLoaded', initializeDashboard);
+window.addEventListener('DOMContentLoaded', async () => {
+    console.log('DOM Content Loaded');
+    await initializeDashboard();
+});
 
-window.addEventListener('pageshow', (event) => {
+// Handle browser back/forward cache
+window.addEventListener('pageshow', async (event) => {
     if (event.persisted) {
+        console.log('Page restored from cache, forcing reload...');
+        // Reset initialization flag
         isInitialized = false;
-        initializeDashboard();
+        // Reload everything
+        await initializeDashboard();
+    }
+});
+
+// Handle page visibility changes (user switching tabs or returning)
+document.addEventListener('visibilitychange', async () => {
+    if (!document.hidden && isInitialized) {
+        console.log('Page visible again, refreshing data...');
+        await loadDashboardData();
+    }
+});
+
+// Handle window focus as backup
+window.addEventListener('focus', async () => {
+    if (isInitialized && !isDataLoading) {
+        console.log('Window focused, refreshing data...');
+        await loadDashboardData();
     }
 });
 
@@ -52,22 +89,38 @@ window.addEventListener('pageshow', (event) => {
 // ==========================================
 
 async function loadDashboardData() {
+    // Prevent concurrent loads
+    if (isDataLoading) {
+        console.log('Data already loading, skipping...');
+        return;
+    }
+    
     try {
+        isDataLoading = true;
+        console.log('Loading dashboard data...');
+        
+        // Update greeting
+        updateGreeting();
+        
         // Load all dashboard data
         await Promise.all([
             loadNetWorth(),
             loadSpendingAndBudgetData(),
             loadRecentTransactions(),
             loadRecurringPayments(),
-            renderSpendingTrendChart(),      // NEW
-            renderBudgetVsActualChart()      // NEW
+            renderSpendingTrendChart(),
+            renderBudgetVsActualChart()
         ]);
         
         // Initialize Lucide icons
         lucide.createIcons();
         
+        console.log('Dashboard data loaded successfully');
+        
     } catch (err) {
         console.error('Error loading dashboard data:', err);
+    } finally {
+        isDataLoading = false;
     }
 }
 
@@ -78,11 +131,10 @@ async function loadBudget(monthKey) {
         .eq('month_key', monthKey)
         .single();
     
-    if (error && error.code !== 'PGRST116') { // PGRST116 = no rows
+    if (error && error.code !== 'PGRST116') {
         console.error('Error loading budget:', error);
     }
     
-    // Handle both old (expenses) and new (categories) structure
     const budgetData = data?.data || {};
     return {
         income: budgetData.income || 0,
@@ -140,11 +192,9 @@ async function loadNetWorth() {
 
 async function loadSpendingAndBudgetData() {
     try {
-        // Get budget information for current month
         const budgetInfo = await loadBudget(MonthNavigation.currentMonth);
         const budgetedIncome = parseFloat(budgetInfo.income) || 0;
 
-        // Get transactions for current month
         const { data: transactions, error } = await supabase
             .from('transactions')
             .select('amount, category, merchant, type, account')
@@ -153,14 +203,12 @@ async function loadSpendingAndBudgetData() {
         
         if (error) throw error;
 
-        // Calculate total expenses
         const totalExpenses = transactions.reduce((sum, t) => {
             return sum + (parseFloat(t.amount) || 0);
         }, 0);
         
         const remaining = budgetedIncome - totalExpenses;
 
-        // Update budget display
         countUp(document.getElementById('budgetSpent'), totalExpenses);
         countUp(document.getElementById('budgetRemaining'), remaining);
         
@@ -169,7 +217,6 @@ async function loadSpendingAndBudgetData() {
             remainingEl.className = remaining >= 0 ? 'main-value positive' : 'main-value negative';
         }
 
-        // Update progress bar
         const percentage = budgetedIncome > 0 ? (totalExpenses / budgetedIncome) * 100 : 0;
         const progressBar = document.getElementById('budgetProgress');
         const progressLabel = document.getElementById('progress-label');
@@ -185,7 +232,6 @@ async function loadSpendingAndBudgetData() {
             progressPercentage.textContent = `${Math.round(percentage)}%`;
         }
 
-        // Render charts and top expenses
         renderSpendingChart(transactions);
         displayTopExpenses(transactions);
 
@@ -288,19 +334,16 @@ function renderSpendingChart(expenses) {
     
     const ctx = canvas.getContext('2d');
     
-    // Destroy previous chart instance if it exists
     if (spendingChartInstance) {
         spendingChartInstance.destroy();
     }
 
-    // Aggregate spending by category
     const spendingByCategory = expenses.reduce((acc, expense) => {
         const category = expense.category || 'Uncategorized';
         acc[category] = (acc[category] || 0) + (parseFloat(expense.amount) || 0);
         return acc;
     }, {});
 
-    // Create new chart
     spendingChartInstance = new Chart(ctx, {
         type: 'doughnut',
         data: {
@@ -308,13 +351,8 @@ function renderSpendingChart(expenses) {
             datasets: [{
                 data: Object.values(spendingByCategory),
                 backgroundColor: [
-                    '#f97316',
-                    '#fb923c',
-                    '#fdba74',
-                    '#fed7aa',
-                    '#ffedd5',
-                    '#d97706',
-                    '#b45309'
+                    '#f97316', '#fb923c', '#fdba74', '#fed7aa',
+                    '#ffedd5', '#d97706', '#b45309'
                 ],
                 borderColor: '#fff',
                 borderWidth: 4,
@@ -324,14 +362,10 @@ function renderSpendingChart(expenses) {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-                legend: {
-                    display: false
-                },
+                legend: { display: false },
                 tooltip: {
                     callbacks: {
-                        label: (context) => {
-                            return `${context.label}: ${formatCurrency(context.raw)}`;
-                        }
+                        label: (context) => `${context.label}: ${formatCurrency(context.raw)}`
                     }
                 }
             }
@@ -343,7 +377,6 @@ function displayTopExpenses(expenses) {
     const listEl = document.getElementById('topExpensesList');
     if (!listEl) return;
     
-    // Sort by amount and get top 5
     const topFive = [...expenses]
         .sort((a, b) => (parseFloat(b.amount) || 0) - (parseFloat(a.amount) || 0))
         .slice(0, 5);
@@ -371,22 +404,16 @@ function displayTopExpenses(expenses) {
     lucide.createIcons();
 }
 
-// ==========================================
-// NEW CHARTS
-// ==========================================
-
 async function renderSpendingTrendChart() {
     const canvas = document.getElementById('spendingTrendChart');
     if (!canvas) return;
     
     const ctx = canvas.getContext('2d');
     
-    // Destroy previous chart
     if (trendChartInstance) {
         trendChartInstance.destroy();
     }
     
-    // Get last 6 months of data
     const months = [];
     const now = new Date();
     
@@ -399,7 +426,6 @@ async function renderSpendingTrendChart() {
         });
     }
     
-    // Fetch transactions for each month
     const spendingData = await Promise.all(
         months.map(async (month) => {
             const { data, error } = await supabase
@@ -439,14 +465,10 @@ async function renderSpendingTrendChart() {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-                legend: {
-                    display: false
-                },
+                legend: { display: false },
                 tooltip: {
                     callbacks: {
-                        label: (context) => {
-                            return `Spending: ${formatCurrency(context.raw)}`;
-                        }
+                        label: (context) => `Spending: ${formatCurrency(context.raw)}`
                     }
                 }
             },
@@ -468,12 +490,10 @@ async function renderBudgetVsActualChart() {
     
     const ctx = canvas.getContext('2d');
     
-    // Destroy previous chart
     if (budgetVsActualChartInstance) {
         budgetVsActualChartInstance.destroy();
     }
     
-    // Get budget and transactions for current month
     const budgetInfo = await loadBudget(MonthNavigation.currentMonth);
     const { data: transactions, error } = await supabase
         .from('transactions')
@@ -486,20 +506,17 @@ async function renderBudgetVsActualChart() {
         return;
     }
     
-    // Calculate actual spending by category
     const actualByCategory = transactions.reduce((acc, t) => {
         const category = t.category || 'Uncategorized';
         acc[category] = (acc[category] || 0) + (parseFloat(t.amount) || 0);
         return acc;
     }, {});
     
-    // Prepare data
     const categories = budgetInfo.categories || [];
     const labels = categories.map(c => c.name);
     const budgeted = categories.map(c => parseFloat(c.budgeted) || 0);
     const actual = categories.map(c => actualByCategory[c.name] || 0);
     
-    // Update month display
     const monthDisplay = document.getElementById('budgetVsActualMonth');
     if (monthDisplay) {
         const [year, month] = MonthNavigation.currentMonth.split('-').map(Number);
@@ -537,9 +554,7 @@ async function renderBudgetVsActualChart() {
                 },
                 tooltip: {
                     callbacks: {
-                        label: (context) => {
-                            return `${context.dataset.label}: ${formatCurrency(context.raw)}`;
-                        }
+                        label: (context) => `${context.dataset.label}: ${formatCurrency(context.raw)}`
                     }
                 }
             },
@@ -563,7 +578,7 @@ function countUp(element, endValue) {
     if (!element) return;
     
     const startValue = parseFloat(element.textContent.replace(/[^0-9.-]+/g, "")) || 0;
-    const duration = 1000; // 1 second
+    const duration = 1000;
     const frameRate = 60;
     const totalFrames = Math.round(duration / (1000 / frameRate));
     const increment = (endValue - startValue) / totalFrames;
@@ -571,7 +586,6 @@ function countUp(element, endValue) {
     let currentValue = startValue;
     let currentFrame = 0;
     
-    // Clear any existing counter
     if (element.counter) {
         clearInterval(element.counter);
     }

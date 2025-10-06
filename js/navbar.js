@@ -78,7 +78,10 @@ async function updateNavUI() {
 function initNavbar() {
     const hamburger = document.getElementById('hamburger');
     const navMenu = document.getElementById('navMenu');
+    const userAvatar = document.getElementById('userAvatar');
+    const avatarDropdown = document.getElementById('avatarDropdown');
 
+    // Hamburger menu
     if (hamburger && navMenu) {
         hamburger.addEventListener('click', function() {
             hamburger.classList.toggle('active');
@@ -88,11 +91,6 @@ function initNavbar() {
         const navLinks = document.querySelectorAll('.nav-link');
         navLinks.forEach(link => {
             link.addEventListener('click', function(e) {
-                // Don't close menu for Settings (opens modal)
-                if (link.id === 'settingsLink') {
-                    return;
-                }
-                
                 hamburger.classList.remove('active');
                 navMenu.classList.remove('active');
             });
@@ -109,30 +107,47 @@ function initNavbar() {
         });
     }
 
-    // Settings link - opens modal
-    const settingsLink = document.getElementById('settingsLink');
-    if (settingsLink) {
-        settingsLink.addEventListener('click', function(e) {
+    // Avatar dropdown
+    if (userAvatar && avatarDropdown) {
+        userAvatar.addEventListener('click', function(e) {
+            e.stopPropagation();
+            avatarDropdown.classList.toggle('visible');
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(event) {
+            if (!avatarDropdown.contains(event.target) && event.target !== userAvatar) {
+                avatarDropdown.classList.remove('visible');
+            }
+        });
+    }
+
+    // Settings link in dropdown
+    const settingsDropdownLink = document.getElementById('settingsDropdownLink');
+    if (settingsDropdownLink) {
+        settingsDropdownLink.addEventListener('click', function(e) {
             e.preventDefault();
+            
+            // Close dropdown
+            if (avatarDropdown) avatarDropdown.classList.remove('visible');
             
             // Open settings modal
             if (typeof window.openSettingsModal === 'function') {
                 window.openSettingsModal();
-                
-                // Close hamburger menu if open
-                if (hamburger) hamburger.classList.remove('active');
-                if (navMenu) navMenu.classList.remove('active');
             } else {
                 console.error('Settings modal not loaded yet');
             }
         });
     }
 
-    // Logout functionality
-    const logoutBtn = document.getElementById('logoutBtn');
-    if (logoutBtn) {
-        logoutBtn.addEventListener('click', async function(e) {
+    // Logout in dropdown
+    const logoutDropdownBtn = document.getElementById('logoutDropdownBtn');
+    if (logoutDropdownBtn) {
+        logoutDropdownBtn.addEventListener('click', async function(e) {
             e.preventDefault();
+            
+            // Close dropdown
+            if (avatarDropdown) avatarDropdown.classList.remove('visible');
             
             try {
                 const { error } = await supabase.auth.signOut();

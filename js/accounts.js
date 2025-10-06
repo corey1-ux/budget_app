@@ -101,6 +101,33 @@ window.addEventListener('pageshow', (event) => {
     }
 });
 
+// Add these after your existing event listeners in each file
+
+// Handle page visibility
+document.addEventListener('visibilitychange', async () => {
+    if (!document.hidden && isInitialized) {
+        console.log('Page visible, refreshing data...');
+        await loadPageData(); // Your page's data loading function
+    }
+});
+
+// Handle browser back/forward
+window.addEventListener('pageshow', async (event) => {
+    if (event.persisted) {
+        console.log('Page from cache, reloading...');
+        isInitialized = false;
+        await initializePage(); // Your page's init function
+    }
+});
+
+// Handle window focus
+window.addEventListener('focus', async () => {
+    if (isInitialized) {
+        console.log('Window focused, refreshing...');
+        await loadPageData();
+    }
+});
+
 // ==========================================
 // MODAL FUNCTIONS
 // ==========================================
