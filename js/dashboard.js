@@ -216,11 +216,21 @@ async function loadNetWorth() {
     }
 }
 
+// Replace your loadSpendingAndBudgetData() function with this:
+
 async function loadSpendingAndBudgetData() {
     try {
+        // Get budget information for current month
         const budgetInfo = await loadBudget(MonthNavigation.currentMonth);
         const budgetedIncome = parseFloat(budgetInfo.income) || 0;
+        
+        // Calculate total BUDGETED expenses (not actual spent)
+        const categories = budgetInfo.categories || budgetInfo.expenses || [];
+        const totalBudgeted = categories.reduce((sum, cat) => {
+            return sum + (parseFloat(cat.amount || cat.budgeted) || 0);
+        }, 0);
 
+        // Get actual transactions for spending display
         const { data: transactions, error } = await supabase
             .from('transactions')
             .select('amount, category, merchant, type, account')
@@ -229,13 +239,16 @@ async function loadSpendingAndBudgetData() {
         
         if (error) throw error;
 
-        const totalExpenses = transactions.reduce((sum, t) => {
+        // Calculate total actually spent (for progress bar)
+        const totalActualSpent = transactions.reduce((sum, t) => {
             return sum + (parseFloat(t.amount) || 0);
         }, 0);
         
-        const remaining = budgetedIncome - totalExpenses;
+        // CHANGED: Remaining = Income - Budgeted (not Income - Spent)
+        const remaining = budgetedIncome - totalBudgeted;
 
-        countUp(document.getElementById('budgetSpent'), totalExpenses);
+        // Update budget display
+        countUp(document.getElementById('budgetSpent'), totalActualSpent);
         countUp(document.getElementById('budgetRemaining'), remaining);
         
         const remainingEl = document.getElementById('budgetRemaining');
@@ -243,7 +256,8 @@ async function loadSpendingAndBudgetData() {
             remainingEl.className = remaining >= 0 ? 'main-value positive' : 'main-value negative';
         }
 
-        const percentage = budgetedIncome > 0 ? (totalExpenses / budgetedIncome) * 100 : 0;
+        // Progress bar shows actual spending vs income
+        const percentage = budgetedIncome > 0 ? (totalActualSpent / budgetedIncome) * 100 : 0;
         const progressBar = document.getElementById('budgetProgress');
         const progressLabel = document.getElementById('progress-label');
         const progressPercentage = document.getElementById('progress-percentage');
@@ -252,12 +266,13 @@ async function loadSpendingAndBudgetData() {
             progressBar.style.width = `${Math.min(percentage, 100)}%`;
         }
         if (progressLabel) {
-            progressLabel.textContent = `${formatCurrency(totalExpenses)} of ${formatCurrency(budgetedIncome)}`;
+            progressLabel.textContent = `${formatCurrency(totalActualSpent)} of ${formatCurrency(budgetedIncome)}`;
         }
         if (progressPercentage) {
             progressPercentage.textContent = `${Math.round(percentage)}%`;
         }
 
+        // Render charts and top expenses (uses actual transactions)
         renderSpendingChart(transactions);
         displayTopExpenses(transactions);
 

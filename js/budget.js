@@ -248,6 +248,8 @@ function handleDrop(e) {
 // EXPENSE ITEM MANAGEMENT
 // ==========================================
 
+// Replace your addExpenseItem() function with this:
+
 function addExpenseItem(name = '', amount = '') {
     const expensesList = document.getElementById('expensesList');
     const emptyState = document.getElementById('emptyState');
@@ -264,26 +266,34 @@ function addExpenseItem(name = '', amount = '') {
     
     const spent = name ? getSpentForCategory(name) : 0;
     const budgeted = parseFloat(amount) || 0;
-    const percentage = budgeted > 0 ? Math.min((spent / budgeted) * 100, 100) : 0;
+    
+    // Calculate percentage SPENT (not remaining)
+    const spentPercentage = budgeted > 0 ? (spent / budgeted) * 100 : 0;
+    const displayPercentage = Math.min(spentPercentage, 100); // Cap at 100% for display
     
     let progressClass = 'expense-progress-fill';
     let spentClass = 'expense-spent-info';
     let spentText = '';
     
     if (budgeted > 0) {
+        const remaining = budgeted - spent;
+        
         if (spent > budgeted) {
+            // Over budget - red, full bar
             progressClass += ' over-budget';
             spentClass += ' over-budget';
-            spentText = `${formatCurrency(spent)} spent`;
-        } else if (percentage >= 80) {
+            spentText = `Over by ${formatCurrency(spent - budgeted)}`;
+        } else if (spentPercentage >= 80) {
+            // Getting close - warning orange
             progressClass += ' warning';
             spentClass += ' warning';
-            spentText = `${formatCurrency(spent)} spent`;
+            spentText = `${formatCurrency(remaining)} left`;
         } else {
-            spentText = `${formatCurrency(spent)} spent`;
+            // Under budget - green
+            spentText = `${formatCurrency(remaining)} left`;
         }
     } else {
-        spentText = spent > 0 ? `${formatCurrency(spent)} spent` : 'No spending';
+        spentText = spent > 0 ? `${formatCurrency(spent)} spent (no budget)` : 'No budget set';
     }
     
     expenseItem.innerHTML = `
@@ -296,7 +306,7 @@ function addExpenseItem(name = '', amount = '') {
             >
             <div class="expense-progress-container">
                 <div class="expense-progress-bar">
-                    <div class="${progressClass}" style="width: ${percentage}%"></div>
+                    <div class="${progressClass}" style="width: ${displayPercentage}%"></div>
                 </div>
             </div>
         </div>
@@ -369,33 +379,45 @@ function updateExpenseProgress(expenseItem) {
     const budgeted = parseFloat(amountInput.value) || 0;
     const spent = categoryName ? getSpentForCategory(categoryName) : 0;
     
-    const percentage = budgeted > 0 ? (spent / budgeted) * 100 : 0;
-    const displayPercentage = Math.min(percentage, 100);
+    // Calculate percentage spent
+    const spentPercentage = budgeted > 0 ? (spent / budgeted) * 100 : 0;
     
-    // Update progress bar width
-    progressFill.style.width = `${displayPercentage}%`;
-    
-    // Update progress bar color and spent info
     let progressClass = 'expense-progress-fill';
     let spentClass = 'expense-spent-info';
     let spentText = '';
+    let displayWidth = 0;
     
     if (budgeted > 0) {
         if (spent > budgeted) {
+            // Over budget - show full bar (red)
             progressClass += ' over-budget';
             spentClass += ' over-budget';
-            spentText = `${formatCurrency(spent)} spent`;
-        } else if (percentage >= 80) {
+            spentText = `Over by ${formatCurrency(spent - budgeted)}`;
+            displayWidth = 100; // Show full bar when over budget
+        } else if (spent === budgeted) {
+            // Exactly at budget
+            progressClass = 'expense-progress-fill';
+            spentClass += ' warning';
+            spentText = `Fully spent`;
+            displayWidth = 100;
+        } else if (spentPercentage >= 80) {
+            // Getting close - warning (orange)
             progressClass += ' warning';
             spentClass += ' warning';
-            spentText = `${formatCurrency(spent)} spent`;
+            spentText = `${formatCurrency(budgeted - spent)} left`;
+            displayWidth = spentPercentage;
         } else {
-            spentText = `${formatCurrency(spent)} spent`;
+            // Normal spending
+            spentText = `${formatCurrency(budgeted - spent)} left`;
+            displayWidth = spentPercentage;
         }
     } else {
-        spentText = spent > 0 ? `${formatCurrency(spent)} spent` : 'No spending';
+        spentText = spent > 0 ? `${formatCurrency(spent)} spent (no budget)` : 'No budget set';
+        displayWidth = 0;
     }
     
+    // Update the progress bar
+    progressFill.style.width = `${displayWidth}%`;
     progressFill.className = progressClass;
     spentInfoEl.className = spentClass;
     spentInfoEl.textContent = spentText;
@@ -438,6 +460,8 @@ function updateEmptyState() {
 // CALCULATIONS
 // ==========================================
 
+// Replace your calculateTotals() function with this:
+
 function calculateTotals() {
     const incomeInput = document.getElementById('income');
     const totalIncomeEl = document.getElementById('totalIncome');
@@ -450,7 +474,7 @@ function calculateTotals() {
     
     const income = parseFloat(incomeInput.value) || 0;
     
-    // Calculate total budgeted expenses
+    // Calculate total BUDGETED expenses (what you plan to spend)
     const expenseValues = document.querySelectorAll('.expense-value');
     let totalBudgetedExpenses = 0;
     
@@ -459,12 +483,13 @@ function calculateTotals() {
         totalBudgetedExpenses += value;
     });
     
-    // Calculate total actual spent
+    // Calculate total ACTUAL spent (what you've actually spent)
     const totalActualSpent = currentMonthTransactions.reduce((sum, t) => {
         return sum + (parseFloat(t.amount) || 0);
     }, 0);
     
-    const remaining = income - totalActualSpent;
+    // CHANGED: Remaining = Income - Budgeted (not Income - Spent)
+    const remaining = income - totalBudgetedExpenses;
     
     // Update display
     if (totalIncomeEl) totalIncomeEl.textContent = formatCurrency(income);
@@ -479,7 +504,7 @@ function calculateTotals() {
         }
     }
     
-    // Update progress bar based on actual spending vs income
+    // Progress bar shows actual spending vs income
     if (progressBar && income > 0) {
         const percentage = Math.min((totalActualSpent / income) * 100, 100);
         progressBar.style.width = `${percentage}%`;
