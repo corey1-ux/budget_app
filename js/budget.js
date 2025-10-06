@@ -16,16 +16,58 @@ async function initializeBudgetPage() {
     const user = await requireAuth();
     if (!user) return;
 
-    // Set up event listeners (only once)
     if (!isInitialized) {
         setupEventListeners();
+        setupRealtime(user.id);  // 👈 ADD THIS LINE
         isInitialized = true;
     }
     
-    // Load data immediately if month is available
     if (MonthNavigation.currentMonth) {
         await loadBudgetData();
     }
+}
+
+// 👇 ADD THIS NEW FUNCTION
+function setupRealtime(userId) {
+    console.log('🔄 Setting up budget realtime...');
+    
+    // Subscribe to budget changes
+    supabase
+        .channel('budget-page-budgets')
+        .on('postgres_changes', {
+            event: '*',
+            schema: 'public',
+            table: 'budgets',
+            filter: `user_id=eq.${userId}`
+        }, async (payload) => {
+            console.log('✨ Budget changed:', payload.eventType);
+            
+            // Reload budget data
+            await loadBudgetData();
+        })
+        .subscribe();
+    
+    // Subscribe to transaction changes (they affect spending)
+    supabase
+        .channel('budget-page-transactions')
+        .on('postgres_changes', {
+            event: '*',
+            schema: 'public',
+            table: 'transactions',
+            filter: `user_id=eq.${userId}`
+        }, async (payload) => {
+            console.log('✨ Transaction changed (affects budget)');
+            
+            const monthKey = payload.new?.month_key || payload.old?.month_key;
+            
+            if (monthKey === MonthNavigation.currentMonth) {
+                // Reload transactions and update progress
+                await loadTransactionsForMonth();
+                updateAllExpenseProgress();
+                calculateTotals();
+            }
+        })
+        .subscribe();
 }
 
 function setupEventListeners() {

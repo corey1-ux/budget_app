@@ -15,38 +15,64 @@ let isDataLoading = false; // Prevent concurrent loads
 // ==========================================
 
 async function initializeDashboard() {
-    console.log('Initializing dashboard...');
-    
     const user = await requireAuth();
     if (!user) return;
 
-    // Wait for MonthNavigation to be ready
     if (!MonthNavigation.currentMonth) {
         MonthNavigation.init();
     }
 
-    // Set up event listeners (only once)
     if (!isInitialized) {
-        setupEventListeners();
+        setupRealtime(user.id);  // 👈 ADD THIS LINE
         isInitialized = true;
     }
     
-    // Always load fresh data
+    updateGreeting();
     await loadDashboardData();
 }
 
-function setupEventListeners() {
-    console.log('Setting up event listeners...');
+// 👇 ADD THIS NEW FUNCTION
+function setupRealtime(userId) {
+    console.log('🔄 Setting up realtime subscriptions...');
     
-    // Month navigation events
-    window.addEventListener('monthChanged', handleMonthChange);
-    window.addEventListener('monthNavReady', handleMonthChange);
+    // Subscribe to transaction changes
+    supabase
+        .channel('dashboard-transactions')
+        .on('postgres_changes', {
+            event: '*',
+            schema: 'public',
+            table: 'transactions',
+            filter: `user_id=eq.${userId}`
+        }, (payload) => {
+            console.log('✨ Transaction changed:', payload.eventType);
+            
+            // Refresh affected data
+            loadRecentTransactions();
+            loadSpendingAndBudgetData();
+        })
+        .subscribe();
+    
+    // Subscribe to account changes
+    supabase
+        .channel('dashboard-accounts')
+        .on('postgres_changes', {
+            event: '*',
+            schema: 'public',
+            table: 'accounts',
+            filter: `user_id=eq.${userId}`
+        }, (payload) => {
+            console.log('✨ Account changed:', payload.eventType);
+            
+            // Refresh net worth
+            loadNetWorth();
+        })
+        .subscribe();
 }
 
-async function handleMonthChange() {
-    console.log('Month changed, reloading data...');
-    await loadDashboardData();
-}
+// 👇 ADD CLEANUP ON PAGE UNLOAD
+window.addEventListener('beforeunload', () => {
+    supabase.removeAllChannels();
+});
 
 // ==========================================
 // PAGE LIFECYCLE EVENT LISTENERS

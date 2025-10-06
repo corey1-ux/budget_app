@@ -16,19 +16,42 @@ async function initializeTransactionsPage() {
     currentUser = await requireAuth();
     if (!currentUser) return;
 
-    // Initialize DOM elements
     initializeDOMElements();
     
-    // Set up event listeners (only once)
     if (!window.transactionListenersAttached) {
         setupEventListeners();
+        setupRealtime(currentUser.id);  // 👈 ADD THIS LINE
         window.transactionListenersAttached = true;
     }
     
-    // Load data immediately if month is available
     if (MonthNavigation.currentMonth) {
         await loadPageData();
     }
+}
+
+// 👇 ADD THIS NEW FUNCTION
+function setupRealtime(userId) {
+    console.log('🔄 Setting up transaction realtime...');
+    
+    supabase
+        .channel('transactions-page')
+        .on('postgres_changes', {
+            event: '*',
+            schema: 'public',
+            table: 'transactions',
+            filter: `user_id=eq.${userId}`
+        }, async (payload) => {
+            console.log('✨ Transaction changed:', payload.eventType);
+            
+            // Check if it affects current month
+            const monthKey = payload.new?.month_key || payload.old?.month_key;
+            
+            if (monthKey === MonthNavigation.currentMonth) {
+                // Reload transactions list
+                await loadTransactions();
+            }
+        })
+        .subscribe();
 }
 
 function initializeDOMElements() {
