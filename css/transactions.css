@@ -93,20 +93,18 @@ body {
 .form-group input::placeholder { color: #cbd5e1; }
 .form-group select:invalid { color: #94a3b8; }
 
-/* --- THIS IS THE FIX --- */
-
-/* 1. Date Input: Correct placeholder and icon color */
+/* Date Input */
 .form-group input[type="date"] {
-    color: #94a3b8; /* Keeps selected date text light gray */
+    color: #94a3b8;
 }
 .form-group input[type="date"]:focus {
-    color: var(--text-primary); /* Darkens text only when focusing */
+    color: var(--text-primary);
 }
 .form-group input[type="date"]::-webkit-calendar-picker-indicator {
     filter: invert(75%) sepia(11%) saturate(300%) hue-rotate(175deg) brightness(95%) contrast(88%);
 }
 
-/* 2. Add Transaction Button: Restore visibility and correct styling */
+/* Add Transaction Button */
 .form-card .btn-primary {
     display: inline-flex;
     align-items: center;
@@ -127,8 +125,6 @@ body {
     transform: translateY(-2px);
     box-shadow: 0 6px 30px rgba(249, 115, 22, 0.4);
 }
-/* --- End of Fix --- */
-
 
 /* Custom input containers */
 .amount-input-group,
@@ -172,6 +168,10 @@ body {
     flex: 1; height: 100%; border: none; background: transparent;
     color: var(--text-secondary); font-weight: 500; border-radius: 6px;
     cursor: pointer; transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
 }
 .toggle-btn.active {
     background: var(--primary); color: white; box-shadow: 0 1px 3px rgba(0,0,0,0.1);
@@ -184,30 +184,458 @@ body {
 
 .filter-controls input { padding: 0.5rem 0.75rem; border-radius: 8px; border: 1px solid var(--border); }
 .transaction-list { list-style: none; }
-.transaction-item { display: flex; align-items: center; padding: 1rem 0; border-bottom: 1px solid var(--border); }
+
+/* Updated Transaction Item with 3-Dot Menu */
+.transaction-item { 
+    display: flex; 
+    align-items: center; 
+    padding: 1rem; 
+    border-bottom: 1px solid var(--border);
+    transition: background 0.2s ease;
+    position: relative;
+}
+.transaction-item:hover {
+    background: var(--bg-secondary);
+}
 .transaction-item:last-child { border-bottom: none; }
-.transaction-icon { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 1rem; }
+
+.transaction-icon { 
+    width: 40px; 
+    height: 40px; 
+    border-radius: 50%; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    margin-right: 1rem;
+    flex-shrink: 0;
+}
 .transaction-icon.income { background-color: #dcfce7; color: #22c55e; }
 .transaction-icon.expense { background-color: #fee2e2; color: #ef4444; }
-.transaction-details { flex-grow: 1; }
-.name { font-weight: 500; }
+.transaction-icon.transfer { background-color: #dbeafe; color: #3b82f6; }
+
+.transaction-details { 
+    flex-grow: 1;
+    min-width: 0;
+}
+.name { 
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
 .category { font-size: 0.875rem; color: #64748b; }
-.transaction-info { text-align: right; }
+
+.transaction-info { 
+    text-align: right;
+    margin-right: 1rem;
+    flex-shrink: 0;
+}
 .amount { font-weight: 600; font-size: 1.125rem; }
 .amount.income { color: #22c55e; }
 .amount.expense { color: #ef4444; }
-.date { font-size: 0.875rem; color: #64748b; }
-.actions { display: flex; gap: 0.5rem; margin-left: 1rem; }
-.action-btn { background: none; border: none; cursor: pointer; color: #94a3b8; padding: 0.5rem; }
-.action-btn:hover { color: var(--text-primary); }
-.list-item-empty p { text-align: center; padding: 2rem; color: #64748b; }
-@media (max-width: 992px) { .content-grid { grid-template-columns: 1fr; } }
+.amount.transfer { color: #3b82f6; }
+.date { font-size: 0.875rem; color: #64748b; margin-top: 0.25rem; }
 
-.transaction-icon.transfer {
-    background-color: #dbeafe;
-    color: #3b82f6;
+/* Transaction Tags */
+.transaction-tags {
+    display: flex;
+    gap: 0.25rem;
+    flex-wrap: wrap;
+    margin-top: 0.25rem;
+}
+.tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.125rem 0.5rem;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
 }
 
-.amount.transfer {
-    color: #3b82f6;
+/* 3-Dot Menu Button */
+.transaction-menu-btn {
+    background: none;
+    border: none;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--text-muted);
+    transition: all 0.2s ease;
+    border-radius: 6px;
+    flex-shrink: 0;
+}
+.transaction-menu-btn:hover,
+.transaction-menu-btn.active {
+    background: var(--bg-secondary);
+    color: var(--primary);
+}
+.transaction-menu-btn svg {
+    width: 18px;
+    height: 18px;
+}
+
+/* Transaction Dropdown Menu */
+.transaction-dropdown {
+    position: absolute;
+    top: calc(100% - 0.5rem);
+    right: 1rem;
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    min-width: 200px;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.2s ease;
+    z-index: 1000;
+}
+
+.transaction-dropdown.visible {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.transaction-dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    transition: background 0.2s ease;
+    border: none;
+    background: none;
+    width: 100%;
+    text-align: left;
+    font-size: 0.95rem;
+    color: var(--text-primary);
+}
+
+.transaction-dropdown-item:first-child {
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+}
+
+.transaction-dropdown-item:last-child {
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+}
+
+.transaction-dropdown-item:hover {
+    background: var(--bg-secondary);
+}
+
+.transaction-dropdown-item.danger {
+    color: #ef4444;
+}
+
+.transaction-dropdown-item.danger:hover {
+    background: #fee2e2;
+}
+
+.transaction-dropdown-item svg {
+    width: 16px;
+    height: 16px;
+    color: var(--text-muted);
+}
+
+.transaction-dropdown-item:hover svg {
+    color: var(--primary);
+}
+
+.transaction-dropdown-item.danger svg {
+    color: #ef4444;
+}
+
+/* Modal Styles */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    z-index: 9999;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.2s ease;
+}
+
+.modal-overlay.active {
+    display: flex;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.modal-container {
+    background-color: white;
+    border-radius: 16px;
+    width: 90%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.25rem 1.5rem;
+    border-bottom: 2px solid var(--border);
+    background-color: var(--bg-secondary);
+    border-top-left-radius: 16px;
+    border-top-right-radius: 16px;
+}
+
+.modal-header h2 {
+    color: var(--text-primary);
+    font-size: 1.375rem;
+    margin: 0;
+    font-weight: 700;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 1.75rem;
+    color: var(--text-muted);
+    cursor: pointer;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+    line-height: 1;
+}
+
+.modal-close:hover {
+    background-color: var(--border);
+    color: var(--text-primary);
+}
+
+.modal-body {
+    padding: 1.5rem;
+}
+
+/* Tag Input Styles */
+.tag-input-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: #f8fafc;
+    min-height: 44px;
+}
+
+.tag-input-container:focus-within {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1);
+}
+
+.tag-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.25rem 0.75rem;
+    background: var(--primary);
+    color: white;
+    border-radius: 16px;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.tag-remove {
+    background: none;
+    border: none;
+    color: white;
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    transition: background 0.2s ease;
+}
+
+.tag-remove:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.tag-input {
+    flex: 1;
+    min-width: 120px;
+    border: none;
+    background: transparent;
+    padding: 0.25rem;
+    font-size: 0.875rem;
+    outline: none;
+}
+
+/* Split Transaction Styles */
+.split-items {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.split-item {
+    display: grid;
+    grid-template-columns: 2fr 1fr auto;
+    gap: 0.75rem;
+    align-items: start;
+    padding: 1rem;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+}
+
+.split-item input,
+.split-item select {
+    height: 40px;
+    padding: 0 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 0.95rem;
+    background: white;
+}
+
+.btn-remove-split {
+    background: transparent;
+    color: var(--text-muted);
+    border: 2px solid var(--border);
+    border-radius: 6px;
+    width: 40px;
+    height: 40px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.btn-remove-split:hover {
+    background: #fee2e2;
+    border-color: #ef4444;
+    color: #ef4444;
+}
+
+.btn-add-split {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border: 1px dashed var(--border);
+    border-radius: 8px;
+    padding: 0.75rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.btn-add-split:hover {
+    background: white;
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+.split-summary {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.75rem;
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    font-weight: 600;
+    margin-top: 1rem;
+}
+
+.split-summary.error {
+    background: #fee2e2;
+    color: #ef4444;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+}
+
+.btn-modal {
+    flex: 1;
+    padding: 0.875rem;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+    font-size: 1rem;
+}
+
+.btn-modal.btn-primary {
+    background: linear-gradient(135deg, var(--primary), var(--accent));
+    color: white;
+}
+
+.btn-modal.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3);
+}
+
+.btn-modal.btn-secondary {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border: 1px solid var(--border);
+}
+
+.btn-modal.btn-secondary:hover {
+    background: var(--border);
+}
+
+.list-item-empty p { text-align: center; padding: 2rem; color: #64748b; }
+
+@media (max-width: 992px) { 
+    .content-grid { grid-template-columns: 1fr; } 
+    
+    .transaction-dropdown {
+        right: auto;
+        left: 50%;
+        transform: translateX(-50%) translateY(-10px);
+    }
+    
+    .transaction-dropdown.visible {
+        transform: translateX(-50%) translateY(0);
+    }
 }

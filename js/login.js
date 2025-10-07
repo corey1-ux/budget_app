@@ -1,8 +1,10 @@
+// js/login.js
+
 document.addEventListener('DOMContentLoaded', () => {
     const signInForm = document.getElementById('signInForm');
     const signUpForm = document.getElementById('signUpForm');
-    const loginModal = document.getElementById('loginModal'); // Get the modal element
-    const closeLoginModalBtn = document.getElementById('closeLoginModal'); // --- THIS IS THE FIX ---
+    const loginModal = document.getElementById('loginModal');
+    const closeLoginModalBtn = document.getElementById('closeLoginModal');
 
     // Function to close the modal
     const closeModal = () => {
@@ -11,12 +13,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // --- THIS IS THE FIX ---
     // Handle Close Button Click
     if (closeLoginModalBtn) {
         closeLoginModalBtn.addEventListener('click', closeModal);
     }
-
 
     // Handle Sign Up
     if (signUpForm) {
@@ -43,7 +43,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     password: password,
                     options: {
                         data: {
-                            // Using email prefix as a default full_name
                             full_name: email.split('@')[0]
                         }
                     }
@@ -55,8 +54,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     alert('This email is already registered. Please sign in instead.');
                 } else {
                     alert('Account created! Please check your email to verify your account, then sign in.');
-                    closeModal(); // Close modal on success
-                    document.getElementById('tab-1').checked = true; // Switch back to sign-in tab
+                    closeModal();
+                    document.getElementById('tab-1').checked = true;
                     signUpForm.reset();
                 }
                 
@@ -76,6 +75,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const password = document.getElementById('signin-pass').value;
             
             try {
+                // Sign out all other sessions first
+                await supabase.auth.signOut({ scope: 'global' });
+                
+                // Then sign in
                 const { data, error } = await supabase.auth.signInWithPassword({
                     email: email,
                     password: password
@@ -95,16 +98,11 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // This function is for redirecting already-logged-in users away from a dedicated login page.
-    // Since the login is now a modal, this isn't strictly necessary but is good practice
-    // to keep in case you ever link to index.html with a parameter to auto-open the modal.
+    // Check if already logged in
     async function checkIfLoggedIn() {
         try {
             const { data: { session } } = await supabase.auth.getSession();
             if (session) {
-                // If a user is logged in and somehow the modal is open,
-                // maybe redirect them, or just ensure the UI reflects their status.
-                // For now, we don't need to redirect from the landing page.
                 console.log('User is already logged in.');
             }
         } catch (error) {

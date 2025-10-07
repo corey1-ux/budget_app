@@ -103,15 +103,137 @@
         </div>
     </main>
 
-    <div class="modal-overlay" id="editModal">
+    <!-- Edit Transaction Modal -->
+    <div class="modal-overlay" id="editTransactionModal">
         <div class="modal-container">
             <div class="modal-header">
                 <h2>Edit Transaction</h2>
-                <button class="modal-close" id="closeEditModal">&times;</button>
+                <button class="modal-close" onclick="closeEditModal()">×</button>
             </div>
             <div class="modal-body">
-                <form id="editForm">
-                    <input type="hidden" id="edit-id">
+                <form id="editTransactionForm" onsubmit="handleEditSubmit(event)">
+                    <div class="form-group">
+                        <label for="editType">Type</label>
+                        <div class="type-toggle">
+                            <button type="button" class="toggle-btn" data-type="expense" onclick="handleEditTypeToggle(event)">
+                                <i data-lucide="arrow-up"></i>
+                                Expense
+                            </button>
+                            <button type="button" class="toggle-btn" data-type="income" onclick="handleEditTypeToggle(event)">
+                                <i data-lucide="arrow-down"></i>
+                                Income
+                            </button>
+                            <button type="button" class="toggle-btn" data-type="transfer" onclick="handleEditTypeToggle(event)">
+                                <i data-lucide="arrow-right-left"></i>
+                                Transfer
+                            </button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="editMerchant">Merchant or Source</label>
+                        <input type="text" id="editMerchant" placeholder="e.g., Amazon, Salary" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editAmount">Amount</label>
+                        <div class="amount-input-group">
+                            <span class="currency-symbol">$</span>
+                            <input type="number" id="editAmount" placeholder="0.00" step="0.01" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="editDay">Date</label>
+                        <input type="date" id="editDay" required>
+                    </div>
+                    <div class="form-group" id="editCategoryGroup">
+                        <label for="editCategory">Category</label>
+                        <select id="editCategory"></select>
+                    </div>
+                    <div class="form-group">
+                        <label for="editAccount">Account</label>
+                        <select id="editAccount" required></select>
+                    </div>
+                    <div class="form-group" id="editTransferToAccountGroup" style="display: none;">
+                        <label for="editTransferToAccount">Transfer To</label>
+                        <select id="editTransferToAccount"></select>
+                    </div>
+                    <div class="form-group checkbox-group">
+                        <input type="checkbox" id="editRecurring">
+                        <label for="editRecurring">Is this a recurring transaction?</label>
+                    </div>
+                    <div class="modal-actions">
+                        <button type="submit" class="btn-modal btn-primary">Save Changes</button>
+                        <button type="button" class="btn-modal btn-secondary" onclick="closeEditModal()">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tag Transaction Modal -->
+    <div class="modal-overlay" id="tagTransactionModal">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h2>Tag Transaction</h2>
+                <button class="modal-close" onclick="closeTagModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <form onsubmit="event.preventDefault(); handleTagSubmit();">
+                    <div class="form-group">
+                        <label>Tags</label>
+                        <div class="tag-input-container" id="tagInputContainer">
+                            <!-- Tags will be added here dynamically -->
+                        </div>
+                        <p style="font-size: 0.875rem; color: var(--text-muted); margin-top: 0.5rem;">
+                            Type tags separated by commas, then click Save
+                        </p>
+                    </div>
+                    <div class="modal-actions">
+                        <button type="submit" class="btn-modal btn-primary">Save Tags</button>
+                        <button type="button" class="btn-modal btn-secondary" onclick="closeTagModal()">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Split Transaction Modal -->
+    <div class="modal-overlay" id="splitTransactionModal">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h2>Split Transaction</h2>
+                <button class="modal-close" onclick="closeSplitModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <form id="splitTransactionForm" onsubmit="handleSplitSubmit(event)">
+                    <div class="form-group">
+                        <label>Original Amount: <strong id="splitOriginalAmount">$0.00</strong></label>
+                        <p style="font-size: 0.875rem; color: var(--text-muted); margin-top: 0.25rem;">
+                            Split this transaction into multiple categories
+                        </p>
+                    </div>
+                    
+                    <div class="split-items" id="splitsContainer">
+                        <!-- Split items will be added here dynamically -->
+                    </div>
+                    
+                    <button type="button" class="btn-add-split" onclick="addSplitItem()">
+                        <i data-lucide="plus"></i>
+                        Add Another Split
+                    </button>
+                    
+                    <div class="split-summary">
+                        <div>
+                            <strong>Total Split:</strong> <span id="splitSummary">$0.00</span>
+                        </div>
+                        <div>
+                            <strong>Difference:</strong> <span id="splitDifference">$0.00</span>
+                        </div>
+                    </div>
+                    
+                    <div class="modal-actions">
+                        <button type="submit" class="btn-modal btn-primary">Split Transaction</button>
+                        <button type="button" class="btn-modal btn-secondary" onclick="closeSplitModal()">Cancel</button>
+                    </div>
                 </form>
             </div>
         </div>
@@ -123,5 +245,31 @@
     <script src="js/monthNavigation.js"></script>
     <script src="js/budgetData.js"></script> 
     <script src="js/transactions.js"></script>
+    
+    <script>
+        // Helper function for edit modal type toggle
+        function handleEditTypeToggle(event) {
+            event.preventDefault();
+            const btn = event.currentTarget;
+            const typeButtons = document.querySelectorAll('#editTransactionModal .toggle-btn');
+            
+            typeButtons.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            
+            const type = btn.dataset.type;
+            const transferToGroup = document.getElementById('editTransferToAccountGroup');
+            const categoryGroup = document.getElementById('editCategoryGroup');
+            
+            if (type === 'transfer') {
+                if (transferToGroup) transferToGroup.style.display = 'block';
+                if (categoryGroup) categoryGroup.style.display = 'none';
+            } else {
+                if (transferToGroup) transferToGroup.style.display = 'none';
+                if (categoryGroup) categoryGroup.style.display = 'block';
+            }
+            
+            lucide.createIcons();
+        }
+    </script>
 </body>
 </html>

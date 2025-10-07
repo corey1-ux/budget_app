@@ -7,6 +7,9 @@ async function loadNavbar() {
         // Insert navbar at the top of body
         document.body.insertAdjacentHTML('afterbegin', html);
         
+        // Initialize dark mode FIRST (before other UI updates)
+        initializeDarkMode();
+        
         // Update UI based on auth state
         await updateNavUI();
 
@@ -19,6 +22,28 @@ async function loadNavbar() {
     } catch (error) {
         console.error('Error loading navbar:', error);
     }
+}
+
+// Initialize dark mode on page load
+function initializeDarkMode() {
+    console.log('Initializing dark mode...');
+    
+    // Check saved preference
+    const savedMode = localStorage.getItem('darkMode');
+    console.log('Saved dark mode preference:', savedMode);
+    
+    const isDarkMode = savedMode === 'true';
+    console.log('Should enable dark mode:', isDarkMode);
+    
+    if (isDarkMode) {
+        document.body.classList.add('dark-mode');
+        console.log('Dark mode class added to body');
+    } else {
+        document.body.classList.remove('dark-mode');
+        console.log('Dark mode class removed from body');
+    }
+    
+    console.log('Body classes after init:', document.body.className);
 }
 
 async function updateNavUI() {
@@ -112,6 +137,10 @@ function initNavbar() {
         userAvatar.addEventListener('click', function(e) {
             e.stopPropagation();
             avatarDropdown.classList.toggle('visible');
+            
+            // Update dark mode UI when opening dropdown
+            const isDarkMode = document.body.classList.contains('dark-mode');
+            updateDarkModeUI(isDarkMode);
         });
 
         // Close dropdown when clicking outside
@@ -119,6 +148,35 @@ function initNavbar() {
             if (!avatarDropdown.contains(event.target) && event.target !== userAvatar) {
                 avatarDropdown.classList.remove('visible');
             }
+        });
+    }
+
+    // Dark mode toggle
+    const darkModeToggle = document.getElementById('darkModeToggle');
+    if (darkModeToggle) {
+        darkModeToggle.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            console.log('Dark mode toggle clicked!');
+            console.log('Current body classes:', document.body.className);
+            console.log('Has dark-mode class before toggle:', document.body.classList.contains('dark-mode'));
+            
+            // Toggle dark mode
+            const isDark = document.body.classList.toggle('dark-mode');
+            
+            console.log('Dark mode is now:', isDark);
+            console.log('Body classes after toggle:', document.body.className);
+            
+            // Save preference
+            localStorage.setItem('darkMode', isDark.toString());
+            console.log('Saved to localStorage:', localStorage.getItem('darkMode'));
+            
+            // Update UI
+            updateDarkModeUI(isDark);
+            
+            // Close dropdown
+            if (avatarDropdown) avatarDropdown.classList.remove('visible');
         });
     }
 
@@ -171,26 +229,51 @@ function initNavbar() {
     }
 }
 
-// Initialize month navigation in navbar
+// Update dark mode button text and icon
+function updateDarkModeUI(isDark) {
+    console.log('Updating dark mode UI:', isDark);
+    console.log('Body background color:', window.getComputedStyle(document.body).backgroundColor);
+    
+    const darkModeText = document.getElementById('darkModeText');
+    const darkModeIcon = document.getElementById('darkModeIcon');
+    
+    if (darkModeText) {
+        darkModeText.textContent = isDark ? 'Light Mode' : 'Dark Mode';
+        console.log('Text updated to:', darkModeText.textContent);
+    }
+    
+    if (darkModeIcon) {
+        // Change the icon
+        const newIcon = isDark ? 'sun' : 'lightbulb';
+        darkModeIcon.setAttribute('data-lucide', newIcon);
+        console.log('Icon changed to:', newIcon);
+        
+        // Reinitialize Lucide icons
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+    }
+}
+
 // Initialize month navigation in navbar
 function initMonthNavInNavbar() {
     // Don't show month navigation on certain pages
     const currentPage = window.location.pathname.split('/').pop();
-    const pagesWithoutMonthNav = ['accounts.html', 'index.html', 'login.html', 'signup.html']; // REMOVED dashboard.html
+    const pagesWithoutMonthNav = ['accounts.html', 'index.html', 'login.html', 'signup.html'];
     
     const monthNavContainer = document.getElementById('monthNavInline');
     const navbarTop = document.querySelector('.navbar-top');
     
     if (pagesWithoutMonthNav.includes(currentPage)) {
-    // Hide month navigation on these pages
-    if (monthNavContainer) {
-        monthNavContainer.style.display = 'none';
+        // Hide month navigation on these pages
+        if (monthNavContainer) {
+            monthNavContainer.style.display = 'none';
+        }
+        if (navbarTop) {
+            navbarTop.classList.add('no-month-nav');
+        }
+        return;
     }
-    if (navbarTop) {
-        navbarTop.classList.add('no-month-nav');
-    }
-    return; // Don't initialize month navigation
-}
     
     // Show month navigation for other pages
     if (monthNavContainer) {

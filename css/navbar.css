@@ -32,6 +32,14 @@
     gap: 2rem;
 }
 
+.navbar-top.no-month-nav {
+    grid-template-columns: 1fr 1fr;
+}
+
+.navbar-top.no-month-nav .month-nav-inline {
+    display: none;
+}
+
 .navbar-bottom {
     display: flex;
     justify-content: center;
@@ -201,7 +209,7 @@
     position: absolute;
     top: calc(100% + 0.5rem);
     right: 0;
-    background: white;
+    background: var(--bg-primary);
     border: 1px solid var(--border);
     border-radius: 8px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
@@ -287,6 +295,80 @@
 }
 
 /* ==========================================
+   DARK MODE STYLES
+   ========================================== */
+
+body.dark-mode .navbar {
+    background: var(--bg-primary);
+    border-color: var(--border);
+}
+
+body.dark-mode .nav-link {
+    color: var(--text-secondary);
+}
+
+body.dark-mode .nav-link:hover {
+    color: var(--primary);
+    background: var(--bg-secondary);
+}
+
+body.dark-mode .btn-month-nav {
+    background: var(--bg-secondary);
+    border-color: var(--border);
+    color: var(--text-primary);
+}
+
+body.dark-mode .btn-month-nav:hover {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+
+body.dark-mode .btn-current-month {
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+    border-color: var(--border);
+}
+
+body.dark-mode .btn-current-month:hover {
+    background: var(--primary);
+    color: white;
+}
+
+body.dark-mode #currentMonthDisplay {
+    color: var(--text-primary);
+}
+
+body.dark-mode .hamburger .bar {
+    background: var(--text-primary);
+}
+
+body.dark-mode #userGreeting {
+    color: var(--text-secondary);
+}
+
+body.dark-mode .avatar-dropdown {
+    background: var(--bg-primary);
+    border-color: var(--border);
+}
+
+body.dark-mode .avatar-dropdown-item {
+    color: var(--text-primary);
+}
+
+body.dark-mode .avatar-dropdown-item:hover {
+    background: var(--bg-secondary);
+}
+
+body.dark-mode .avatar-dropdown-item svg {
+    color: var(--text-muted);
+}
+
+body.dark-mode .avatar-dropdown-item:hover svg {
+    color: var(--primary);
+}
+
+/* ==========================================
    RESPONSIVE DESIGN
    ========================================== */
 
@@ -353,12 +435,4 @@
     .month-nav-inline {
         display: none !important;
     }
-}
-
-.navbar-top.no-month-nav {
-    grid-template-columns: 1fr 1fr;
-}
-
-.navbar-top.no-month-nav .month-nav-inline {
-    display: none;
 }
