@@ -7,10 +7,12 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
 
     <link rel="stylesheet" href="css/main.css">
     <link rel="stylesheet" href="css/navbar.css">
     <link rel="stylesheet" href="css/transactions.css">
+    <link rel="stylesheet" href="css/csvImport.css">
     <link rel="stylesheet" href="css/settingsModal.css">
 </head>
 <body>
@@ -92,6 +94,11 @@
                     <h3>This Month's Transactions</h3>
                     <div class="filter-controls">
                         <input type="text" id="searchFilter" placeholder="Search...">
+                        <input type="file" id="csv-upload" accept=".csv" style="display: none;">
+                        <button class="btn btn-secondary" id="import-csv-btn">
+                            <i data-lucide="upload"></i>
+                            Import CSV
+                        </button>
                     </div>
                 </div>
                 <div class="card-body">
@@ -102,6 +109,49 @@
             </div>
         </div>
     </main>
+
+    <!-- CSV Import Modal -->
+    <div class="modal-overlay" id="csvImportModal">
+        <div class="modal-container" style="max-width: 900px;">
+            <div class="modal-header">
+                <h2>Import Transactions from CSV</h2>
+                <button class="modal-close" id="closeCsvModal">×</button>
+            </div>
+            <div class="modal-body">
+                <!-- Initial upload form -->
+                <form id="csvImportForm">
+                    <div class="form-group">
+                        <label for="csvAccount">Select Account for Import</label>
+                        <select id="csvAccount" required>
+                            <option value="">Loading accounts...</option>
+                        </select>
+                    </div>
+                    
+                    <div class="csv-upload-area" id="csvUploadArea">
+                        <i data-lucide="upload-cloud"></i>
+                        <p>Drag and drop your CSV file here</p>
+                        <span>or click to browse</span>
+                    </div>
+                    
+                    <input type="file" id="csv-upload" accept=".csv" class="csv-file-input">
+                    
+                    <div style="margin-top: 1.5rem; padding: 1rem; background: var(--bg-secondary); border-radius: 8px;">
+                        <h4 style="margin: 0 0 0.75rem 0; font-size: 0.95rem; color: var(--text-primary);">
+                            <i data-lucide="info" style="width: 16px; height: 16px; vertical-align: middle;"></i>
+                            CSV Requirements
+                        </h4>
+                        <ul style="margin: 0; padding-left: 1.5rem; font-size: 0.875rem; color: var(--text-secondary);">
+                            <li>Must contain columns: <strong>Date</strong>, <strong>Description/Merchant</strong>, and <strong>Amount</strong></li>
+                            <li>AI will automatically categorize your transactions</li>
+                            <li>Duplicates will be detected and can be skipped</li>
+                            <li>You'll be able to review before importing</li>
+                        </ul>
+                    </div>
+                </form>
+                <!-- Preview will be injected here by JavaScript -->
+            </div>
+        </div>
+    </div>
 
     <!-- Edit Transaction Modal -->
     <div class="modal-overlay" id="editTransactionModal">
@@ -181,8 +231,7 @@
                     <div class="form-group">
                         <label>Tags</label>
                         <div class="tag-input-container" id="tagInputContainer">
-                            <!-- Tags will be added here dynamically -->
-                        </div>
+                            </div>
                         <p style="font-size: 0.875rem; color: var(--text-muted); margin-top: 0.5rem;">
                             Type tags separated by commas, then click Save
                         </p>
@@ -213,8 +262,7 @@
                     </div>
                     
                     <div class="split-items" id="splitsContainer">
-                        <!-- Split items will be added here dynamically -->
-                    </div>
+                        </div>
                     
                     <button type="button" class="btn-add-split" onclick="addSplitItem()">
                         <i data-lucide="plus"></i>
@@ -239,6 +287,7 @@
         </div>
     </div>
 
+    <!-- Load Scripts -->
     <script src="js/supabaseClient.js"></script>
     <script src="js/navbar.js"></script>
     <script src="js/settingsModal.js"></script>

@@ -18,7 +18,7 @@ async function initializeBudgetPage() {
 
     if (!isInitialized) {
         setupEventListeners();
-        setupRealtime(user.id);  // 👈 ADD THIS LINE
+        setupRealtime(user.id);
         isInitialized = true;
     }
     
@@ -27,7 +27,6 @@ async function initializeBudgetPage() {
     }
 }
 
-// 👇 ADD THIS NEW FUNCTION
 function setupRealtime(userId) {
     console.log('🔄 Setting up budget realtime...');
     
@@ -113,22 +112,11 @@ window.addEventListener('pageshow', (event) => {
     }
 });
 
-// Add these after your existing event listeners in each file
-
 // Handle page visibility
 document.addEventListener('visibilitychange', async () => {
     if (!document.hidden && isInitialized) {
         console.log('Page visible, refreshing data...');
-        await loadPageData(); // Your page's data loading function
-    }
-});
-
-// Handle browser back/forward
-window.addEventListener('pageshow', async (event) => {
-    if (event.persisted) {
-        console.log('Page from cache, reloading...');
-        isInitialized = false;
-        await initializePage(); // Your page's init function
+        await loadBudgetData(); // <-- FIX: Was calling the wrong function name
     }
 });
 
@@ -136,7 +124,7 @@ window.addEventListener('pageshow', async (event) => {
 window.addEventListener('focus', async () => {
     if (isInitialized) {
         console.log('Window focused, refreshing...');
-        await loadPageData();
+        await loadBudgetData(); // <-- FIX: Was calling the wrong function name
     }
 });
 // ==========================================
@@ -544,7 +532,7 @@ async function saveBudgetData() {
         const name = item.querySelector('.expense-name').value;
         const amount = parseFloat(item.querySelector('.expense-value').value) || 0;
         
-        // Only save expenses that have a name or an amount
+        // Only save expenses that have a name or an amount > 0
         if (name || amount > 0) {
             expenses.push({ name, amount });
         }

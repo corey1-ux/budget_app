@@ -1,0 +1,73 @@
+/* css/base/variables.css - All CSS variables in one place */
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap');
+
+:root {
+    /* Brand Colors */
+    --primary: #f97316;
+    --accent: #ea580c;
+    --secondary: #fb923c;
+    
+    /* Background Colors */
+    --bg-primary: #ffffff;
+    --bg-secondary: #f8fafc;
+    --card-bg: #ffffff;
+    
+    /* Text Colors */
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --text-muted: #64748b;
+    
+    /* Border & Shadows */
+    --border: #e2e8f0;
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    
+    /* Status Colors */
+    --success: #22c55e;
+    --danger: #ef4444;
+    --warning: #f59e0b;
+    
+    /* Component Sizes */
+    --input-height: 44px;
+    --border-radius: 8px;
+    --border-radius-lg: 12px;
+    --border-radius-xl: 16px;
+    
+    /* Animation */
+    --transition: all 0.2s ease;
+    --transition-slow: all 0.3s ease;
+}
+
+/* Dark Mode Variables */
+body.dark-mode {
+    --bg-primary: #1e293b !important;
+    --bg-secondary: #0f172a !important;
+    --card-bg: #1e293b !important;
+    --text-primary: #f1f5f9 !important;
+    --text-secondary: #cbd5e1 !important;
+    --text-muted: #94a3b8 !important;
+    --border: #334155 !important;
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3) !important;
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* Base Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Roboto', sans-serif;
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+    transition: var(--transition-slow);
+}
+
+/* Dark Mode Transitions */
+body.dark-mode * {
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease !important;
+}

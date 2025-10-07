@@ -1,0 +1,689 @@
+/* css/components/modals.css - Modal component styles */
+
+/* ===========================================
+   MODAL OVERLAY & CONTAINER
+   =========================================== */
+
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    z-index: 9999;
+    align-items: center;
+    justify-content: center;
+    animation: modal-fade-in 0.2s ease;
+    backdrop-filter: blur(4px);
+}
+
+.modal-overlay.active {
+    display: flex;
+}
+
+@keyframes modal-fade-in {
+    from { 
+        opacity: 0; 
+        backdrop-filter: blur(0px);
+    }
+    to { 
+        opacity: 1; 
+        backdrop-filter: blur(4px);
+    }
+}
+
+.modal-container {
+    background-color: var(--bg-primary);
+    border-radius: var(--border-radius-xl);
+    width: 90%;
+    max-width: 420px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: var(--shadow-xl);
+    animation: modal-slide-up 0.3s ease;
+    border: 1px solid var(--border);
+}
+
+.modal-container.large {
+    max-width: 600px;
+}
+
+.modal-container.extra-large {
+    max-width: 800px;
+}
+
+@keyframes modal-slide-up {
+    from {
+        transform: translateY(50px);
+        opacity: 0;
+        scale: 0.95;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+        scale: 1;
+    }
+}
+
+/* ===========================================
+   MODAL HEADER
+   =========================================== */
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.25rem 1.5rem;
+    border-bottom: 2px solid var(--border);
+    background-color: var(--bg-secondary);
+    border-top-left-radius: var(--border-radius-xl);
+    border-top-right-radius: var(--border-radius-xl);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.modal-header h2 {
+    color: var(--text-primary);
+    font-size: 1.375rem;
+    margin: 0;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.modal-header h2 svg {
+    width: 20px;
+    height: 20px;
+    color: var(--primary);
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 1.75rem;
+    color: var(--text-muted);
+    cursor: pointer;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: var(--transition);
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.modal-close:hover {
+    background-color: var(--border);
+    color: var(--text-primary);
+    transform: scale(1.1);
+}
+
+.modal-close:active {
+    transform: scale(0.95);
+}
+
+/* ===========================================
+   MODAL BODY
+   =========================================== */
+
+.modal-body {
+    padding: 1.5rem;
+}
+
+.modal-body.no-padding {
+    padding: 0;
+}
+
+.modal-body.large-padding {
+    padding: 2rem;
+}
+
+/* ===========================================
+   MODAL ACTIONS
+   =========================================== */
+
+.modal-actions {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 1.75rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+}
+
+.modal-actions.sticky {
+    position: sticky;
+    bottom: 0;
+    background: var(--bg-primary);
+    margin-top: 0;
+    margin-bottom: -1.5rem;
+    margin-left: -1.5rem;
+    margin-right: -1.5rem;
+    padding: 1.5rem;
+    border-top: 2px solid var(--border);
+}
+
+.modal-actions.center {
+    justify-content: center;
+}
+
+.modal-actions.space-between {
+    justify-content: space-between;
+}
+
+.btn-modal {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.875rem 1.25rem;
+    border-radius: var(--border-radius);
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    border: none;
+    min-height: 44px;
+}
+
+.btn-modal.btn-primary {
+    background: linear-gradient(135deg, var(--primary), var(--accent));
+    color: white;
+    box-shadow: 0 2px 8px rgba(249, 115, 22, 0.2);
+}
+
+.btn-modal.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3);
+}
+
+.btn-modal.btn-secondary {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border: 1px solid var(--border);
+}
+
+.btn-modal.btn-secondary:hover {
+    background: var(--border);
+    transform: translateY(-1px);
+}
+
+.btn-modal.btn-danger {
+    background-color: var(--danger);
+    color: white;
+}
+
+.btn-modal.btn-danger:hover {
+    background-color: #dc2626;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+.btn-modal svg {
+    width: 16px;
+    height: 16px;
+}
+
+.btn-modal:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+/* ===========================================
+   MODAL TABS (For Settings Modal)
+   =========================================== */
+
+.modal-tabs {
+    display: flex;
+    flex-direction: column;
+    height: calc(90vh - 100px);
+    max-height: 600px;
+}
+
+.settings-tabs {
+    width: 200px;
+    background-color: var(--bg-secondary);
+    border-right: 2px solid var(--border);
+    padding: 1rem 0;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+}
+
+.tab-btn {
+    background: none;
+    border: none;
+    padding: 1rem 1.5rem;
+    text-align: left;
+    cursor: pointer;
+    color: var(--text-muted);
+    font-size: 1rem;
+    font-weight: 500;
+    transition: var(--transition);
+    border-left: 3px solid transparent;
+    position: relative;
+}
+
+.tab-btn:hover {
+    background-color: var(--border);
+    color: var(--text-primary);
+}
+
+.tab-btn.active {
+    background-color: var(--bg-primary);
+    color: var(--primary);
+    border-left-color: var(--primary);
+    font-weight: 600;
+}
+
+.tab-btn.active::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 6px;
+    height: 6px;
+    background: var(--primary);
+    border-radius: 50%;
+}
+
+.tab-content {
+    flex: 1;
+    padding: 2rem;
+    overflow-y: auto;
+}
+
+.tab-pane {
+    display: none;
+}
+
+.tab-pane.active {
+    display: block;
+    animation: tab-fade-in 0.2s ease;
+}
+
+@keyframes tab-fade-in {
+    from { 
+        opacity: 0; 
+        transform: translateX(10px);
+    }
+    to { 
+        opacity: 1; 
+        transform: translateX(0);
+    }
+}
+
+/* ===========================================
+   MODAL SECTIONS
+   =========================================== */
+
+.modal-section {
+    margin-bottom: 2rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.modal-section:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.modal-section h3 {
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+    font-size: 1.25rem;
+    font-weight: 700;
+}
+
+.modal-section h4 {
+    color: var(--text-primary);
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.modal-section > p {
+    color: var(--text-secondary);
+    margin-bottom: 1.5rem;
+    line-height: 1.6;
+}
+
+.modal-section.danger-zone {
+    background-color: rgba(239, 68, 68, 0.05);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    border-radius: var(--border-radius);
+    padding: 1.5rem;
+    margin-top: 2rem;
+}
+
+.modal-section.danger-zone h4 {
+    color: var(--danger);
+}
+
+/* ===========================================
+   SPECIAL MODAL COMPONENTS
+   =========================================== */
+
+/* Tag Input Container */
+.tag-input-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    border: 2px solid var(--border);
+    border-radius: var(--border-radius);
+    background: var(--bg-secondary);
+    min-height: 44px;
+    transition: var(--transition);
+}
+
+.tag-input-container:focus-within {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1);
+    background: var(--bg-primary);
+}
+
+.tag-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.25rem 0.75rem;
+    background: var(--primary);
+    color: white;
+    border-radius: 16px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    animation: tag-appear 0.2s ease;
+}
+
+@keyframes tag-appear {
+    from {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.tag-remove {
+    background: none;
+    border: none;
+    color: white;
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    transition: var(--transition);
+    font-size: 12px;
+    line-height: 1;
+}
+
+.tag-remove:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.tag-input {
+    flex: 1;
+    min-width: 120px;
+    border: none;
+    background: transparent;
+    padding: 0.25rem;
+    font-size: 0.875rem;
+    outline: none;
+    color: var(--text-primary);
+}
+
+.tag-input::placeholder {
+    color: var(--text-muted);
+}
+
+/* Split Transaction Components */
+.split-items {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.split-item {
+    display: grid;
+    grid-template-columns: 2fr 1fr auto;
+    gap: 0.75rem;
+    align-items: start;
+    padding: 1rem;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: var(--border-radius);
+    animation: split-item-appear 0.3s ease;
+}
+
+@keyframes split-item-appear {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.btn-add-split {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border: 2px dashed var(--border);
+    border-radius: var(--border-radius);
+    padding: 0.75rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-weight: 500;
+    transition: var(--transition);
+    margin-bottom: 1rem;
+}
+
+.btn-add-split:hover {
+    background: var(--bg-primary);
+    border-color: var(--primary);
+    color: var(--primary);
+    border-style: solid;
+}
+
+.btn-remove-split {
+    background: transparent;
+    color: var(--text-muted);
+    border: 2px solid var(--border);
+    border-radius: var(--border-radius);
+    width: 40px;
+    height: 40px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition);
+}
+
+.btn-remove-split:hover {
+    background: #fee2e2;
+    border-color: var(--danger);
+    color: var(--danger);
+}
+
+.split-summary {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    background: var(--bg-secondary);
+    border-radius: var(--border-radius);
+    font-weight: 600;
+    margin-top: 1rem;
+    border: 2px solid var(--border);
+}
+
+.split-summary.error {
+    background: #fee2e2;
+    color: var(--danger);
+    border-color: var(--danger);
+    animation: shake 0.3s ease;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+}
+
+/* Profile Picture Section */
+.profile-picture-section {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.avatar-preview {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid var(--border);
+    transition: var(--transition);
+}
+
+.avatar-preview:hover {
+    border-color: var(--primary);
+    transform: scale(1.05);
+}
+
+.upload-hint {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-top: 0.5rem;
+    font-style: italic;
+}
+
+/* ===========================================
+   DARK MODE SUPPORT
+   =========================================== */
+
+body.dark-mode .modal-overlay {
+    background-color: rgba(0, 0, 0, 0.8);
+}
+
+body.dark-mode .modal-container {
+    background: var(--bg-primary);
+    border-color: var(--border);
+}
+
+body.dark-mode .modal-header {
+    background: var(--bg-secondary);
+    border-color: var(--border);
+}
+
+body.dark-mode .settings-tabs {
+    background: var(--bg-secondary);
+    border-color: var(--border);
+}
+
+body.dark-mode .tab-btn.active {
+    background: var(--bg-primary);
+}
+
+body.dark-mode .tag-input-container {
+    background: var(--bg-secondary);
+    border-color: var(--border);
+}
+
+body.dark-mode .split-item {
+    background: var(--bg-secondary);
+    border-color: var(--border);
+}
+
+/* ===========================================
+   RESPONSIVE DESIGN
+   =========================================== */
+
+@media (max-width: 768px) {
+    .modal-container {
+        width: 95%;
+        max-height: 95vh;
+        margin: 1rem;
+    }
+    
+    .modal-tabs {
+        flex-direction: column;
+        height: auto;
+        max-height: none;
+    }
+    
+    .settings-tabs {
+        width: 100%;
+        flex-direction: row;
+        overflow-x: auto;
+        border-right: none;
+        border-bottom: 2px solid var(--border);
+        padding: 0;
+    }
+    
+    .tab-btn {
+        border-left: none;
+        border-bottom: 3px solid transparent;
+        white-space: nowrap;
+        min-width: 120px;
+        padding: 0.75rem 1rem;
+    }
+    
+    .tab-btn.active {
+        border-left: none;
+        border-bottom-color: var(--primary);
+    }
+    
+    .tab-btn.active::after {
+        display: none;
+    }
+    
+    .tab-content {
+        padding: 1rem;
+    }
+    
+    .modal-header {
+        padding: 1rem;
+    }
+    
+    .modal-body {
+        padding: 1rem;
+    }
+    
+    .modal-actions {
+        flex-direction: column;
+    }
+    
+    .split-item {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+    }
+    
+    .profile-picture-section {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+}

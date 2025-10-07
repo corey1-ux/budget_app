@@ -1,0 +1,647 @@
+/* css/pages/transactions.css - Transactions page specific styles */
+
+/* ===========================================
+   TRANSACTION FORM SPECIFIC
+   =========================================== */
+
+.form-card form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.form-card .btn-primary {
+    width: 100%;
+    justify-content: center;
+    margin-top: 0.5rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.form-card .btn-primary::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s ease;
+}
+
+.form-card .btn-primary:hover::before {
+    left: 100%;
+}
+
+/* ===========================================
+   TRANSACTION FORM COMPONENTS
+   =========================================== */
+
+/* Hide/show transfer fields */
+#transferToAccountGroup {
+    display: none;
+    animation: slideDown 0.3s ease;
+}
+
+#transferToAccountGroup.visible {
+    display: block;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+        max-height: 0;
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+        max-height: 100px;
+    }
+}
+
+/* Account label dynamic text */
+#accountLabel {
+    transition: var(--transition);
+}
+
+#accountLabel.transfer {
+    color: var(--primary);
+    font-weight: 600;
+}
+
+/* ===========================================
+   TRANSACTION LIST SPECIFIC
+   =========================================== */
+
+.transaction-menu-btn {
+    background: none;
+    border: none;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--text-muted);
+    transition: var(--transition);
+    flex-shrink: 0;
+    border-radius: 6px;
+    position: relative;
+}
+
+.transaction-menu-btn:hover,
+.transaction-menu-btn.active {
+    background: var(--bg-secondary);
+    color: var(--primary);
+    transform: scale(1.1);
+}
+
+.transaction-menu-btn svg {
+    width: 18px;
+    height: 18px;
+}
+
+.transaction-dropdown {
+    position: absolute;
+    top: calc(100% - 0.5rem);
+    right: 1rem;
+    background: var(--bg-primary);
+    border: 1px solid var(--border);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-md);
+    min-width: 200px;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: var(--transition);
+    z-index: 1000;
+}
+
+.transaction-dropdown.visible {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.transaction-dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    transition: var(--transition);
+    border: none;
+    background: none;
+    width: 100%;
+    text-align: left;
+    font-size: 0.95rem;
+    color: var(--text-primary);
+}
+
+.transaction-dropdown-item:first-child {
+    border-top-left-radius: var(--border-radius);
+    border-top-right-radius: var(--border-radius);
+}
+
+.transaction-dropdown-item:last-child {
+    border-bottom-left-radius: var(--border-radius);
+    border-bottom-right-radius: var(--border-radius);
+}
+
+.transaction-dropdown-item:hover {
+    background: var(--bg-secondary);
+}
+
+.transaction-dropdown-item.danger {
+    color: var(--danger);
+}
+
+.transaction-dropdown-item.danger:hover {
+    background: rgba(239, 68, 68, 0.1);
+}
+
+.transaction-dropdown-item svg {
+    width: 16px;
+    height: 16px;
+    color: var(--text-muted);
+}
+
+.transaction-dropdown-item:hover svg {
+    color: var(--primary);
+}
+
+.transaction-dropdown-item.danger svg {
+    color: var(--danger);
+}
+
+/* ===========================================
+   SPLIT TRANSACTION COMPONENTS
+   =========================================== */
+
+.split-items {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.split-item {
+    display: grid;
+    grid-template-columns: 2fr 1fr auto;
+    gap: 0.75rem;
+    align-items: start;
+    padding: 1rem;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: var(--border-radius);
+    animation: split-item-appear 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.split-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(90deg, var(--primary), var(--accent));
+    transition: left 0.3s ease;
+}
+
+.split-item:hover::before {
+    left: 100%;
+}
+
+@keyframes split-item-appear {
+    from {
+        opacity: 0;
+        transform: translateY(10px) scale(0.98);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.split-item input,
+.split-item select {
+    height: 40px;
+    padding: 0 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 0.95rem;
+    background: var(--bg-primary);
+    transition: var(--transition);
+}
+
+.split-item input:focus,
+.split-item select:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.1);
+}
+
+.btn-remove-split {
+    background: transparent;
+    color: var(--text-muted);
+    border: 2px solid var(--border);
+    border-radius: 6px;
+    width: 40px;
+    height: 40px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition);
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-remove-split::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--danger);
+    opacity: 0;
+    transition: var(--transition);
+    border-radius: inherit;
+}
+
+.btn-remove-split:hover {
+    border-color: var(--danger);
+    color: var(--danger);
+    transform: scale(1.05);
+}
+
+.btn-remove-split:hover::before {
+    opacity: 0.1;
+}
+
+.btn-remove-split svg {
+    width: 16px;
+    height: 16px;
+    position: relative;
+    z-index: 1;
+}
+
+.btn-add-split {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border: 2px dashed var(--border);
+    border-radius: var(--border-radius);
+    padding: 0.75rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-weight: 500;
+    transition: var(--transition);
+    margin-bottom: 1rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-add-split::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--primary);
+    opacity: 0;
+    transition: var(--transition);
+    border-radius: inherit;
+}
+
+.btn-add-split:hover {
+    background: var(--bg-primary);
+    border-color: var(--primary);
+    color: var(--primary);
+    border-style: solid;
+    transform: translateY(-1px);
+}
+
+.btn-add-split:hover::before {
+    opacity: 0.05;
+}
+
+.btn-add-split svg {
+    width: 16px;
+    height: 16px;
+    position: relative;
+    z-index: 1;
+}
+
+.split-summary {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    background: var(--bg-secondary);
+    border-radius: var(--border-radius);
+    font-weight: 600;
+    margin-top: 1rem;
+    border: 2px solid var(--border);
+    position: relative;
+    overflow: hidden;
+}
+
+.split-summary::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--success), #16a34a);
+    transition: var(--transition);
+}
+
+.split-summary.error {
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--danger);
+    border-color: var(--danger);
+    animation: shake 0.3s ease;
+}
+
+.split-summary.error::before {
+    background: linear-gradient(90deg, var(--danger), #dc2626);
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+}
+
+/* ===========================================
+   TRANSACTION STATUS INDICATORS
+   =========================================== */
+
+.transaction-status {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--success);
+}
+
+.transaction-status.pending {
+    background: var(--warning);
+    animation: pulse 2s infinite;
+}
+
+.transaction-status.failed {
+    background: var(--danger);
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+/* ===========================================
+   TRANSACTION FILTERS
+   =========================================== */
+
+.transaction-filters {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    padding: 1rem;
+    background: var(--bg-secondary);
+    border-radius: var(--border-radius);
+    border: 1px solid var(--border);
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    flex: 1;
+}
+
+.filter-group label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+.filter-group select,
+.filter-group input {
+    height: 36px;
+    padding: 0 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--bg-primary);
+    font-size: 0.9rem;
+}
+
+/* ===========================================
+   QUICK ACTION BUTTONS
+   =========================================== */
+
+.quick-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.quick-action-btn {
+    padding: 0.5rem 1rem;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: var(--border-radius);
+    color: var(--text-primary);
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.quick-action-btn:hover {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+    transform: translateY(-1px);
+}
+
+.quick-action-btn.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+
+/* ===========================================
+   TRANSACTION BULK ACTIONS
+   =========================================== */
+
+.bulk-actions {
+    display: none;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--bg-secondary);
+    border-radius: var(--border-radius);
+    margin-bottom: 1rem;
+    border: 1px solid var(--border);
+}
+
+.bulk-actions.visible {
+    display: flex;
+    animation: slideDown 0.3s ease;
+}
+
+.bulk-select-all {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.bulk-action-btns {
+    display: flex;
+    gap: 0.5rem;
+    margin-left: auto;
+}
+
+.bulk-action-btn {
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.bulk-action-btn:hover {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+
+.bulk-action-btn.danger {
+    color: var(--danger);
+    border-color: var(--danger);
+}
+
+.bulk-action-btn.danger:hover {
+    background: var(--danger);
+    color: white;
+}
+
+/* ===========================================
+   RESPONSIVE DESIGN
+   =========================================== */
+
+@media (max-width: 768px) {
+    .split-item {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+    }
+    
+    .transaction-dropdown {
+        right: auto;
+        left: 50%;
+        transform: translateX(-50%) translateY(-10px);
+    }
+    
+    .transaction-dropdown.visible {
+        transform: translateX(-50%) translateY(0);
+    }
+    
+    .transaction-filters {
+        flex-direction: column;
+    }
+    
+    .quick-actions {
+        flex-wrap: wrap;
+    }
+    
+    .bulk-actions {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.75rem;
+    }
+    
+    .bulk-action-btns {
+        margin-left: 0;
+        justify-content: center;
+    }
+    
+    .form-card form {
+        gap: 1rem;
+    }
+}
+
+/* ===========================================
+   DARK MODE ADJUSTMENTS
+   =========================================== */
+
+body.dark-mode .split-item {
+    background: var(--bg-secondary);
+    border-color: var(--border);
+}
+
+body.dark-mode .split-item input,
+body.dark-mode .split-item select {
+    background: var(--bg-primary);
+    border-color: var(--border);
+    color: var(--text-primary);
+}
+
+body.dark-mode .transaction-filters {
+    background: var(--bg-secondary);
+    border-color: var(--border);
+}
+
+body.dark-mode .filter-group select,
+body.dark-mode .filter-group input {
+    background: var(--bg-primary);
+    border-color: var(--border);
+    color: var(--text-primary);
+}
+
+body.dark-mode .bulk-actions {
+    background: var(--bg-secondary);
+    border-color: var(--border);
+}
+
+body.dark-mode .bulk-action-btn {
+    background: var(--bg-primary);
+    border-color: var(--border);
+    color: var(--text-primary);
+}
+
+/* ===========================================
+   PRINT STYLES
+   =========================================== */
+
+@media print {
+    .transaction-menu-btn,
+    .btn-add-split,
+    .btn-remove-split,
+    .bulk-actions,
+    .quick-actions {
+        display: none;
+    }
+    
+    .transaction-item {
+        break-inside: avoid;
+    }
+    
+    .split-item {
+        border: 1px solid #ccc !important;
+        background: white !important;
+    }
+    
+    .form-card {
+        display: none;
+    }
+}

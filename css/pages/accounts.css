@@ -1,0 +1,635 @@
+/* css/pages/accounts.css - Accounts page specific styles */
+
+/* ===========================================
+   SUMMARY CARDS SPECIFIC TO ACCOUNTS
+   =========================================== */
+
+.summary-card.assets .summary-value {
+    color: var(--success);
+}
+
+.summary-card.debts .summary-value {
+    color: var(--danger);
+}
+
+.summary-card.net-worth .summary-value {
+    color: var(--primary);
+}
+
+.card-icon.assets {
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(22, 163, 74, 0.08));
+    color: var(--success);
+}
+
+.card-icon.debts {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(220, 38, 38, 0.08));
+    color: var(--danger);
+}
+
+.card-icon.net-worth {
+    background: linear-gradient(135deg, rgba(249, 115, 22, 0.1), rgba(234, 88, 12, 0.08));
+    color: var(--primary);
+}
+
+/* ===========================================
+   ACCOUNT EXPAND/COLLAPSE FUNCTIONALITY
+   =========================================== */
+
+.account-item.expanded .account-main {
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    border-bottom: none;
+}
+
+.account-transactions {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+    background: var(--bg-primary);
+    border: 2px solid var(--border);
+    border-top: none;
+    border-bottom-left-radius: var(--border-radius-lg);
+    border-bottom-right-radius: var(--border-radius-lg);
+    width: 100%;
+}
+
+.account-item.asset .account-transactions {
+    border-left: 5px solid var(--success);
+}
+
+.account-item.debt .account-transactions {
+    border-left: 5px solid var(--danger);
+}
+
+.account-item.expanded .account-transactions {
+    max-height: 600px;
+    overflow-y: auto;
+    animation: expandDown 0.3s ease;
+}
+
+@keyframes expandDown {
+    from {
+        max-height: 0;
+        opacity: 0;
+    }
+    to {
+        max-height: 600px;
+        opacity: 1;
+    }
+}
+
+.account-transactions-header {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-secondary);
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+.account-transactions-header h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.account-transactions-header h4::before {
+    content: '📋';
+    font-size: 0.875rem;
+}
+
+.account-transactions-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+/* ===========================================
+   ACCOUNT TRANSACTION ITEMS
+   =========================================== */
+
+.account-transaction-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: var(--transition);
+    position: relative;
+}
+
+.account-transaction-item:last-child {
+    border-bottom: none;
+}
+
+.account-transaction-item:hover {
+    background: var(--bg-secondary);
+}
+
+.account-transaction-item::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: var(--primary);
+    transform: scaleY(0);
+    transition: transform 0.2s ease;
+}
+
+.account-transaction-item:hover::before {
+    transform: scaleY(1);
+}
+
+.transaction-left {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex: 1;
+    min-width: 0;
+}
+
+.transaction-type-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    position: relative;
+}
+
+.transaction-type-icon::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: inherit;
+    opacity: 0.1;
+    transform: scale(0);
+    transition: var(--transition);
+}
+
+.account-transaction-item:hover .transaction-type-icon::after {
+    transform: scale(1.2);
+    opacity: 0.2;
+}
+
+.transaction-type-icon.income {
+    background: rgba(34, 197, 94, 0.1);
+    color: var(--success);
+}
+
+.transaction-type-icon.expense {
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--danger);
+}
+
+.transaction-type-icon.transfer {
+    background: rgba(59, 130, 246, 0.1);
+    color: #3b82f6;
+}
+
+.transaction-type-icon svg {
+    width: 20px;
+    height: 20px;
+    position: relative;
+    z-index: 1;
+}
+
+.transaction-details-text {
+    flex: 1;
+    min-width: 0;
+}
+
+.transaction-merchant {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+    font-size: 1rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.transaction-category {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.transaction-right {
+    text-align: right;
+    margin-left: 1rem;
+    flex-shrink: 0;
+}
+
+.transaction-amount {
+    font-weight: 700;
+    font-size: 1.125rem;
+    margin-bottom: 0.25rem;
+}
+
+.transaction-amount.income {
+    color: var(--success);
+}
+
+.transaction-amount.expense {
+    color: var(--danger);
+}
+
+.transaction-amount.transfer {
+    color: #3b82f6;
+}
+
+.transaction-date {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+}
+
+.no-transactions {
+    padding: 2rem 1.25rem;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    font-style: italic;
+}
+
+.no-transactions::before {
+    content: '💳';
+    display: block;
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+}
+
+/* ===========================================
+   ACCOUNT ACTIONS & DROPDOWNS
+   =========================================== */
+
+.account-actions {
+    display: flex;
+    align-items: center;
+    position: relative;
+}
+
+.btn-account-action {
+    background: transparent;
+    border: none;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--text-muted);
+    transition: var(--transition);
+    flex-shrink: 0;
+    border-radius: 6px;
+    position: relative;
+}
+
+.btn-account-action::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--primary);
+    opacity: 0;
+    border-radius: inherit;
+    transition: var(--transition);
+}
+
+.btn-account-action:hover,
+.btn-account-action.active {
+    color: var(--primary);
+    transform: scale(1.1);
+}
+
+.btn-account-action:hover::before,
+.btn-account-action.active::before {
+    opacity: 0.1;
+}
+
+.btn-account-action svg {
+    width: 18px;
+    height: 18px;
+    position: relative;
+    z-index: 1;
+}
+
+.account-dropdown {
+    position: absolute;
+    top: calc(100% + 0.5rem);
+    right: 0;
+    background: var(--bg-primary);
+    border: 1px solid var(--border);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-md);
+    min-width: 180px;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: var(--transition);
+    z-index: 1000;
+}
+
+.account-dropdown.visible {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.account-dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    transition: var(--transition);
+    border: none;
+    background: none;
+    width: 100%;
+    text-align: left;
+    font-size: 0.95rem;
+    color: var(--text-primary);
+    position: relative;
+}
+
+.account-dropdown-item::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: var(--primary);
+    transform: scaleY(0);
+    transition: transform 0.2s ease;
+}
+
+.account-dropdown-item:first-child {
+    border-top-left-radius: var(--border-radius);
+    border-top-right-radius: var(--border-radius);
+}
+
+.account-dropdown-item:last-child {
+    border-bottom-left-radius: var(--border-radius);
+    border-bottom-right-radius: var(--border-radius);
+}
+
+.account-dropdown-item:hover {
+    background: var(--bg-secondary);
+}
+
+.account-dropdown-item:hover::before {
+    transform: scaleY(1);
+}
+
+.account-dropdown-item svg {
+    width: 16px;
+    height: 16px;
+    color: var(--text-muted);
+    position: relative;
+    z-index: 1;
+}
+
+.account-dropdown-item:hover svg {
+    color: var(--primary);
+}
+
+/* ===========================================
+   ACCOUNT BALANCE DISPLAYS
+   =========================================== */
+
+.account-balance.asset-balance {
+    color: var(--success);
+    position: relative;
+}
+
+.account-balance.debt-balance {
+    color: var(--danger);
+    position: relative;
+}
+
+.account-balance::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: currentColor;
+    opacity: 0.2;
+    border-radius: 1px;
+}
+
+/* ===========================================
+   LOADING STATES FOR ACCOUNTS
+   =========================================== */
+
+.account-loading {
+    position: relative;
+}
+
+.account-loading::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+    animation: loading-sweep 1.5s infinite;
+    border-radius: inherit;
+}
+
+@keyframes loading-sweep {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+.account-loading .account-balance {
+    color: transparent;
+    background: var(--border);
+    border-radius: 4px;
+}
+
+/* ===========================================
+   ACCOUNT TYPE INDICATORS
+   =========================================== */
+
+.account-type-indicator {
+    position: absolute;
+    top: 0.5rem;
+    left: 0.5rem;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    z-index: 1;
+}
+
+.account-type-indicator.asset {
+    background: var(--success);
+    box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.2);
+}
+
+.account-type-indicator.debt {
+    background: var(--danger);
+    box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2);
+}
+
+/* ===========================================
+   ACCOUNTS SUMMARY ANIMATIONS
+   =========================================== */
+
+.summary-value {
+    transition: var(--transition);
+}
+
+.summary-card:hover .summary-value {
+    transform: scale(1.05);
+}
+
+.summary-card.assets:hover .summary-value {
+    text-shadow: 0 0 10px rgba(34, 197, 94, 0.3);
+}
+
+.summary-card.debts:hover .summary-value {
+    text-shadow: 0 0 10px rgba(239, 68, 68, 0.3);
+}
+
+.summary-card.net-worth:hover .summary-value {
+    text-shadow: 0 0 10px rgba(249, 115, 22, 0.3);
+}
+
+/* ===========================================
+   RESPONSIVE DESIGN
+   =========================================== */
+
+@media (max-width: 768px) {
+    .account-main {
+        flex-wrap: wrap;
+    }
+    
+    .account-main-left {
+        order: 1;
+        width: 100%;
+    }
+    
+    .account-balance-section {
+        order: 2;
+        width: 100%;
+        justify-content: flex-end;
+        margin-top: 0.5rem;
+    }
+    
+    .account-actions {
+        margin-left: 0;
+    }
+    
+    .account-transaction-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
+    
+    .transaction-right {
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-left: 0;
+        text-align: left;
+    }
+    
+    .account-dropdown {
+        right: auto;
+        left: 50%;
+        transform: translateX(-50%) translateY(-10px);
+    }
+    
+    .account-dropdown.visible {
+        transform: translateX(-50%) translateY(0);
+    }
+    
+    .account-transactions {
+        border-left: none !important;
+        border-top: 5px solid;
+    }
+    
+    .account-item.asset .account-transactions {
+        border-top-color: var(--success);
+    }
+    
+    .account-item.debt .account-transactions {
+        border-top-color: var(--danger);
+    }
+    
+    .account-transactions-header h4::before {
+        display: none;
+    }
+}
+
+/* ===========================================
+   DARK MODE ADJUSTMENTS
+   =========================================== */
+
+body.dark-mode .account-transactions {
+    background: var(--bg-primary);
+    border-color: var(--border);
+}
+
+body.dark-mode .account-transactions-header {
+    background: var(--bg-secondary);
+    border-color: var(--border);
+}
+
+body.dark-mode .account-transaction-item:hover {
+    background: var(--bg-secondary);
+}
+
+body.dark-mode .account-dropdown {
+    background: var(--bg-primary);
+    border-color: var(--border);
+}
+
+body.dark-mode .account-dropdown-item {
+    color: var(--text-primary);
+}
+
+body.dark-mode .account-dropdown-item:hover {
+    background: var(--bg-secondary);
+}
+
+/* ===========================================
+   PRINT STYLES
+   =========================================== */
+
+@media print {
+    .account-actions,
+    .btn-account-action {
+        display: none;
+    }
+    
+    .account-item.expanded .account-transactions {
+        max-height: none;
+        overflow: visible;
+    }
+    
+    .account-transaction-item {
+        break-inside: avoid;
+    }
+    
+    .account-main:hover {
+        transform: none;
+        box-shadow: none;
+    }
+}
